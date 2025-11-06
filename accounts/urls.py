@@ -2,10 +2,15 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('register/', views.register_user, name='register'),
+    # Authentication
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
-    path('admin/', views.admin_dashboard, name='admin_dashboard'),
-    path('staff/', views.staff_dashboard, name='staff_dashboard'),
-    path('normal/', views.normal_dashboard, name='normal_dashboard'),
+
+    # Admin-only registration
+    path('register/', views.register_user, name='register'),
+
+    # Dashboards
+    path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
+    path('normal/dashboard/', views.normal_dashboard, name='normal_dashboard'),
 ]

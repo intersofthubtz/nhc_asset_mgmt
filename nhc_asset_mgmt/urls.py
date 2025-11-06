@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path, include
+from django.views.generic import RedirectView
 
 def home(request):
     return redirect('login')
@@ -24,6 +25,7 @@ def home(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
+    path('', RedirectView.as_view(url='/accounts/login/', permanent=False)),
     # path('', include('assets.urls')),
     # path('', include('requests.urls')),
     # path('maintenance/', include('maintenance.urls')),
