@@ -1,34 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex justify-center items-center w-full h-full px-4">
-    <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-sm sm:max-w-md md:max-w-sm">
+<div class="flex justify-center items-center w-full h-full px-4 py-8">
+    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-sm sm:max-w-md">
         <!-- Header -->
-        <div class="text-center mb-5">
-            <h2 class="text-xl sm:text-2xl font-bold text-nhc-blue">Welcome Back</h2>
-            <p class="text-sm text-gray-500">Login to your NHC Asset Management account</p>
+        <div class="text-center mb-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-nhc-blue">Welcome Back</h2>
+            <p class="text-sm sm:text-base text-gray-500 mt-1">
+                Login to your NHC Asset Management account
+            </p>
         </div>
 
         <!-- Login Form -->
-        <form method="post" class="space-y-3">
+        <form method="post" class="space-y-4">
             {% csrf_token %}
 
             <!-- Email Field -->
             <div>
                 <input type="email" name="email" placeholder="Email"
                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-nhc-yellow focus:border-nhc-yellow"
-                       required>
+                       required autocomplete="email">
             </div>
 
             <!-- Password Field -->
             <div class="relative">
                 <input id="password" type="password" name="password" placeholder="Password"
                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-nhc-yellow focus:border-nhc-yellow pr-10"
-                       required>
+                       required autocomplete="current-password">
+
                 <!-- Toggle Button -->
                 <button type="button" id="togglePassword"
                         class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-nhc-blue focus:outline-none"
-                        aria-label="Show password">
+                        aria-label="Toggle password visibility">
                     <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                          stroke-width="2" stroke="currentColor" class="w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -40,10 +43,17 @@
 
             <!-- Submit Button -->
             <button type="submit"
-                    class="w-full bg-nhc-yellow text-nhc-black font-semibold py-2 rounded-md hover:bg-yellow-500 transition text-sm sm:text-base">
+                    class="w-full bg-nhc-yellow text-nhc-black font-semibold py-2.5 rounded-md hover:bg-yellow-500 transition-all duration-200 text-sm sm:text-base shadow-sm">
                 Login
             </button>
         </form>
+
+        <!-- Optional Forgot Password / Register Links -->
+        <div class="text-center mt-5 text-sm text-gray-600">
+            <a href="#" class="hover:text-nhc-blue">Forgot password?</a>
+            <span class="mx-2 text-gray-400">|</span>
+            <a href="#" class="hover:text-nhc-blue">Create account</a>
+        </div>
     </div>
 </div>
 
@@ -56,9 +66,11 @@
     togglePassword.addEventListener('click', () => {
         const isPassword = passwordField.type === 'password';
         passwordField.type = isPassword ? 'text' : 'password';
+
+        // Update SVG icon when toggling
         eyeIcon.innerHTML = isPassword
             ? '<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.973 9.973 0 012.113-3.568m3.043-2.51A9.97 9.97 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.972 9.972 0 01-4.657 5.341M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'
-            : '<path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/>';
     });
 </script>
 {% endblock %}

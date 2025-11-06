@@ -1,74 +1,113 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>NHC Asset Management</title>
+
+    <!-- Mobile & Browser Responsiveness -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="{% static 'images/nhc-logo.png' %}"
+      type="image/png"
+    />
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- NHC Brand Colors Config -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        nhc: {
-                            yellow: '#FABA00',
-                            blue: '#0F5391',
-                            black: '#000000',
-                            lightgray: '#f8f9fa',
-                        },
-                    },
-                },
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              nhc: {
+                yellow: "#FABA00",
+                blue: "#0F5391",
+                black: "#000000",
+                lightgray: "#f8f9fa",
+              },
             },
-        };
+          },
+        },
+      };
     </script>
 
+    <!-- Global Styles -->
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden; /* Prevents scrolling */
-        }
+      html,
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden; /* prevents horizontal scrolling */
+      }
     </style>
-</head>
-<body class="bg-nhc-lightgray text-nhc-black flex flex-col h-full">
+  </head>
 
+  <body class="bg-nhc-lightgray text-nhc-black min-h-screen flex flex-col">
     <!-- Header -->
     <header class="bg-nhc-blue text-white shadow-md py-4 flex-shrink-0">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-lg font-bold">NHC Asset Management</h1>
-            <nav>
-                {% if request.session.user_id %}
-                    <a href="{% url 'logout' %}" class="text-nhc-yellow font-semibold hover:underline">Logout</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="text-nhc-yellow font-semibold hover:underline">Login</a>
-                {% endif %}
-            </nav>
+      <div class="container mx-auto px-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <!-- NHC Logo -->
+          <img
+            src="{% static 'images/nhc-logo.png' %}"
+            alt="NHC Logo"
+            class="h-10 w-auto rounded-md bg-white p-1 shadow-sm"
+          />
+          <h1 class="text-lg sm:text-xl font-bold">NHC Asset Management</h1>
         </div>
+
+        <!-- Navigation -->
+        <nav class="space-x-4 text-sm sm:text-base">
+          {% if request.session.user_id %}
+          <a
+            href="{% url 'logout' %}"
+            class="text-nhc-yellow font-semibold hover:underline"
+            >Logout</a
+          >
+          {% else %}
+          <a
+            href="{% url 'login' %}"
+            class="text-nhc-yellow font-semibold hover:underline"
+            >Login</a
+          >
+          {% endif %}
+        </nav>
+      </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow flex items-center justify-center overflow-hidden">
-        {% if messages %}
-        <ul class="space-y-3 absolute top-20 left-1/2 transform -translate-x-1/2 w-full max-w-md">
-            {% for message in messages %}
-            <li class="border-l-4 border-nhc-yellow bg-yellow-50 p-4 rounded-md shadow-sm">
-                {{ message }}
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+    <main
+      class="flex-grow relative flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8"
+    >
+      <!-- Django Messages -->
+      {% if messages %}
+      <ul
+        class="absolute top-20 left-1/2 transform -translate-x-1/2 w-full max-w-md space-y-3"
+      >
+        {% for message in messages %}
+        <li
+          class="border-l-4 p-4 rounded-md shadow-sm text-sm sm:text-base {% if message.tags == 'success' %} border-green-500 bg-green-50 text-green-800 {% elif message.tags == 'error' %} border-red-500 bg-red-50 text-red-800 {% elif message.tags == 'warning' %} border-yellow-500 bg-yellow-50 text-yellow-800 {% else %} border-nhc-yellow bg-yellow-50 text-nhc-black {% endif %}"
+        >
+          {{ message }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
 
-        {% block content %}{% endblock %}
+      <!-- Dynamic Page Content -->
+      {% block content %} {% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-nhc-blue text-white text-center py-3 flex-shrink-0">
-        &copy; {{ now|date:"Y" }} NHC Asset Management. All Rights Reserved.
+    <footer
+      class="bg-nhc-blue text-white text-center py-3 flex-shrink-0 mt-auto"
+    >
+      &copy; {{ now|date:"Y" }} NHC Asset Management. All Rights Reserved.
     </footer>
-
-</body>
+  </body>
 </html>
