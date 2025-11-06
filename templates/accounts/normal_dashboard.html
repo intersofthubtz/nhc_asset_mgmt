@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <h2>Normal User Dashboard</h2>
+        <p>Welcome, {{ request.session.user_id }}! You can view available assets and make requests.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Available Assets</h5>
+            <p>See all available assets you can borrow.</p>
+            <a href="#" class="btn btn-nhc mt-2">View Assets</a>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>My Borrow Requests</h5>
+            <p>Check the status of your asset requests.</p>
+            <a href="#" class="btn btn-nhc mt-2">View Requests</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <h2>Staff Dashboard</h2>
+        <p>Welcome, {{ request.session.user_id }}! You can manage assigned tasks and view assets.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Borrow Requests</h5>
+            <p>View and approve asset borrow requests.</p>
+            <a href="#" class="btn btn-nhc mt-2">View Requests</a>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Asset Maintenance</h5>
+            <p>Check assets under maintenance or repair.</p>
+            <a href="#" class="btn btn-nhc mt-2">View Assets</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

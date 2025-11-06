@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <h2>Admin Dashboard</h2>
+        <p>Welcome, Admin! You can manage users, assets, and requests.</p>
+        <a href="{% url 'register' %}" class="btn btn-nhc">Register New User</a>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Users</h5>
+            <p>Manage user accounts and roles.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Assets</h5>
+            <p>View and manage assets in the system.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
