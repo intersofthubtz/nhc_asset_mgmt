@@ -1,24 +1,22 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="row">
-    <div class="col-12 mb-3">
-        <h2>Admin Dashboard</h2>
-        <p>Welcome, Admin! You can manage users, assets, and requests.</p>
-        <a href="{% url 'register' %}" class="btn btn-nhc">Register New User</a>
+<div class="w-full px-4 py-8">
+    <div class="mb-6 text-center sm:text-left">
+        <h2 class="text-2xl font-bold text-nhc-blue">Admin Dashboard</h2>
+        <p class="text-gray-700 mt-1">Manage users, assets, and requests.</p>
+        <a href="{% url 'register' %}" class="inline-block mt-3 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
+            + Register New User
+        </a>
     </div>
-</div>
-<div class="row mt-4">
-    <div class="col-12 col-md-6 mb-3">
-        <div class="card p-3 shadow-sm">
-            <h5>Users</h5>
-            <p>Manage user accounts and roles.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-nhc-yellow hover:shadow-lg transition">
+            <h5 class="text-lg font-semibold text-nhc-blue mb-2">Users</h5>
+            <p class="text-gray-600 mb-3">Manage user accounts and roles.</p>
         </div>
-    </div>
-    <div class="col-12 col-md-6 mb-3">
-        <div class="card p-3 shadow-sm">
-            <h5>Assets</h5>
-            <p>View and manage assets in the system.</p>
+        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-nhc-blue hover:shadow-lg transition">
+            <h5 class="text-lg font-semibold text-nhc-blue mb-2">Assets</h5>
+            <p class="text-gray-600 mb-3">View and manage assets in the system.</p>
         </div>
     </div>
 </div>

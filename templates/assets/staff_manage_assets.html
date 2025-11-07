@@ -1,0 +1,76 @@
+{% extends "accounts/staff_dashboard.html" %}
+{% load widget_tweaks %}
+
+{% block staff_content %}
+
+<!-- Breadcrumb -->
+<nav class="mb-6 text-sm text-gray-500" aria-label="Breadcrumb">
+    <ol class="list-reset flex items-center">
+        <li>
+            <a href="{% url 'staff_dashboard' %}" class="text-gray-500 hover:text-gray-700 hover:underline">
+                Dashboard
+            </a>
+        </li>
+        <li><span class="mx-2 text-gray-400">/</span></li>
+        <li class="text-gray-700 font-medium">Manage Assets</li>
+    </ol>
+</nav>
+
+<!-- Page Header and Add Button -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-nhc-blue">Manage Assets</h2>
+    <a href="{% url 'assets:add_asset' %}" 
+       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-2">
+        <i class="fas fa-plus"></i>
+        Add New Asset
+    </a>
+</div>
+
+<!-- Asset Table -->
+<div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2 text-left font-medium border">Asset Name</th>
+                <th class="px-4 py-2 text-left font-medium border">Model</th>
+                <th class="px-4 py-2 text-left font-medium border">Serial Number</th>
+                <th class="px-4 py-2 text-left font-medium border">Barcode</th>
+                <th class="px-4 py-2 text-left font-medium border">Status</th>
+                <th class="px-4 py-2 text-left font-medium border">Condition</th>
+                <th class="px-4 py-2 text-left font-medium border">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for asset in assets %}
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-2 border">{{ asset.asset_name }}</td>
+                <td class="px-4 py-2 border">{{ asset.model }}</td>
+                <td class="px-4 py-2 border">{{ asset.serial_number }}</td>
+                <td class="px-4 py-2 border">{{ asset.barcode }}</td>
+                <td class="px-4 py-2 border">{{ asset.status }}</td>
+                <td class="px-4 py-2 border">{{ asset.asset_condition }}</td>
+                <td class="px-4 py-2 border flex gap-3">
+                    <a href="{% url 'assets:asset_detail' asset.pk %}" 
+                       class="text-gray-600 hover:text-gray-800" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'assets:edit_asset' asset.pk %}" 
+                       class="text-blue-600 hover:text-blue-800" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'assets:delete_asset' asset.pk %}" 
+                       class="text-red-600 hover:text-red-800" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-4 text-gray-500">No assets found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

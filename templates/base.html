@@ -4,21 +4,19 @@
   <head>
     <meta charset="UTF-8" />
     <title>NHC Asset Management</title>
-
-    <!-- Mobile & Browser Responsiveness -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Favicon -->
     <link
       rel="icon"
       href="{% static 'images/nhc-logo.png' %}"
       type="image/png"
     />
 
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- NHC Brand Colors Config -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+      rel="stylesheet"
+    />
     <script>
       tailwind.config = {
         theme: {
@@ -36,71 +34,69 @@
       };
     </script>
 
-    <!-- Global Styles -->
     <style>
       html,
       body {
         margin: 0;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        overflow-x: hidden; /* prevents horizontal scrolling */
+        overflow-x: hidden;
       }
     </style>
   </head>
-
   <body class="bg-nhc-lightgray text-nhc-black min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="bg-nhc-blue text-white shadow-md py-4 flex-shrink-0">
+    <header class="bg-nhc-blue text-white shadow-md py-5 flex-shrink-0">
       <div class="container mx-auto px-4 flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-          <!-- NHC Logo -->
-          <img
-            src="{% static 'images/nhc-logo.png' %}"
-            alt="NHC Logo"
-            class="h-10 w-auto rounded-md bg-white p-1 shadow-sm"
-          />
+        <!-- Logo + Title -->
+        <div class="flex items-center gap-2">
+          <a href="{% url 'login' %}">
+            <img
+              src="{% static 'images/nhc-logo.png' %}"
+              alt="NHC Logo"
+              class="h-10 w-auto rounded-md bg-white p-1 shadow-sm"
+            />
+          </a>
           <h1 class="text-lg sm:text-xl font-bold">NHC Asset Management</h1>
         </div>
 
-        <!-- Navigation -->
-        <nav class="space-x-4 text-sm sm:text-base">
-          {% if request.session.user_id %}
+        <!-- Login/Logout Button -->
+        <div>
+          {% if user.is_authenticated %}
           <a
             href="{% url 'logout' %}"
-            class="text-nhc-yellow font-semibold hover:underline"
-            >Logout</a
+            class="bg-nhc-yellow text-nhc-black px-3 py-1 rounded-md hover:bg-yellow-500 transition text-sm sm:text-base"
           >
+            Logout
+          </a>
           {% else %}
           <a
             href="{% url 'login' %}"
-            class="text-nhc-yellow font-semibold hover:underline"
-            >Login</a
+            class="bg-nhc-yellow text-nhc-black px-3 py-1 rounded-md hover:bg-yellow-500 transition text-sm sm:text-base"
           >
+            Login
+          </a>
           {% endif %}
-        </nav>
+        </div>
       </div>
     </header>
 
     <!-- Main Content -->
     <main
-      class="flex-grow relative flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8"
+      class="flex-grow relative flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 py-2"
     >
-      <!-- Django Messages -->
       {% if messages %}
       <ul
-        class="absolute top-20 left-1/2 transform -translate-x-1/2 w-full max-w-md space-y-3"
+        class="absolute top-24 left-1/2 transform -translate-x-1/2 w-full max-w-md space-y-3 z-50"
       >
         {% for message in messages %}
         <li
-          class="border-l-4 p-4 rounded-md shadow-sm text-sm sm:text-base {% if message.tags == 'success' %} border-green-500 bg-green-50 text-green-800 {% elif message.tags == 'error' %} border-red-500 bg-red-50 text-red-800 {% elif message.tags == 'warning' %} border-yellow-500 bg-yellow-50 text-yellow-800 {% else %} border-nhc-yellow bg-yellow-50 text-nhc-black {% endif %}"
+          class="border-l-4 p-4 rounded-md shadow-sm text-sm sm:text-base {% if message.tags == 'success' %}border-green-500 bg-green-50 text-green-800 {% elif message.tags == 'error' %}border-red-500 bg-red-50 text-red-800 {% elif message.tags == 'warning' %}border-yellow-500 bg-yellow-50 text-yellow-800 {% else %}border-nhc-yellow bg-yellow-50 text-nhc-black{% endif %}"
         >
           {{ message }}
         </li>
         {% endfor %}
       </ul>
-      {% endif %}
-
-      <!-- Dynamic Page Content -->
-      {% block content %} {% endblock %}
+      {% endif %} {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->

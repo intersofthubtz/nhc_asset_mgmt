@@ -4,40 +4,36 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from functools import wraps
 from .forms import UserRegistrationForm, UserLoginForm
-from .models import User
 
-# Custom decorator for role-based access
-def role_required(role):
+# --- Decorators ---
+
+def roles_required(*roles):
+    """Allow only users with specified roles to access view"""
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
-            if not request.user.is_authenticated or request.user.role != role:
+            if not request.user.is_authenticated or request.user.role not in roles:
                 messages.error(request, "Access denied.")
                 return redirect('login')
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
 
+def nocache(view_func):
+    """Prevent browser caching for sensitive pages"""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        response = view_func(request, *args, **kwargs)
+        from django.utils.cache import add_never_cache_headers
+        add_never_cache_headers(response)
+        return response
+    return wrapper
 
-# Admin-only registration
-@login_required
-@role_required('admin')
-def register_user(request):
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "User registered successfully.")
-            return redirect('admin_dashboard')
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'accounts/register.html', {'form': form})
+# --- Authentication Views ---
 
-
-# Login
 def login_user(request):
     if request.user.is_authenticated:
-        # Already logged in, redirect by role
+        # Already logged in → redirect by role
         if request.user.role == 'admin':
             return redirect('admin_dashboard')
         elif request.user.role == 'staff':
@@ -48,10 +44,9 @@ def login_user(request):
     if request.method == 'POST':
         form = UserLoginForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data['user']  
+            user = form.cleaned_data['user']
             login(request, user)
-
-            # redirect by role
+            # Redirect by role
             if user.role == 'admin':
                 return redirect('admin_dashboard')
             elif user.role == 'staff':
@@ -65,29 +60,74 @@ def login_user(request):
 
     return render(request, 'accounts/login.html', {'form': form})
 
-
-# Logout
 @login_required
 def logout_user(request):
     logout(request)
     messages.success(request, "Logged out successfully.")
     return redirect('login')
 
+# --- Admin Registration ---
 
-# Dashboards
 @login_required
-@role_required('admin')
+@roles_required('admin')
+def register_user(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "User registered successfully.")
+            return redirect('admin_dashboard')
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'accounts/register.html', {'form': form})
+
+# --- Dashboards ---
+
+@login_required
+@roles_required('admin')
+@nocache
 def admin_dashboard(request):
     return render(request, 'accounts/admin_dashboard.html')
 
-
 @login_required
-@role_required('staff')
+@roles_required('staff')
+@nocache
 def staff_dashboard(request):
     return render(request, 'accounts/staff_dashboard.html')
 
+@login_required
+@roles_required('staff')
+@nocache
+def staff_dashboard(request):
+    return render(request, 'accounts/staff_dashboard.html')
 
 @login_required
-@role_required('normal')
+@roles_required('staff')
+@nocache
+def staff_manage_assets(request):
+    # Fetch assets if needed
+    return render(request, 'assets/staff_manage_assets.html')
+
+@login_required
+@roles_required('staff')
+@nocache
+def staff_manage_requests(request):
+    # Fetch requests if needed
+    return render(request, 'requests/staff_manage_requests.html')
+
+@login_required
+@roles_required('staff')
+@nocache
+def staff_report(request):
+    # Generate reports if needed
+    return render(request, 'assets/staff_report.html')
+
+
+
+
+
+@login_required
+@roles_required('normal')
+@nocache
 def normal_dashboard(request):
     return render(request, 'accounts/normal_dashboard.html')

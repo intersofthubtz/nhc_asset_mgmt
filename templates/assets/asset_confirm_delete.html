@@ -1,0 +1,54 @@
+{% extends "accounts/staff_dashboard.html" %}
+
+{% block staff_content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-100 mt-10">
+    <!-- Warning Icon & Title -->
+    <div class="flex items-center mb-6">
+        <div class="flex items-center justify-center w-12 h-12 bg-red-100 text-red-600 rounded-full mr-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01M12 5a7 7 0 00-7 7v5a2 2 0 002 2h10a2 2 0 002-2v-5a7 7 0 00-7-7z" />
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Delete Asset</h2>
+    </div>
+
+    <!-- Confirmation Text -->
+    <p class="text-gray-700 leading-relaxed mb-6">
+        You are about to permanently delete the asset 
+        <span class="font-semibold text-gray-900">“{{ asset.asset_name }}”</span>.
+        <br>
+        <span class="text-red-600 font-medium">This action cannot be undone.</span>
+    </p>
+
+    <!-- Asset Summary -->
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-sm text-gray-600">
+        <p><span class="font-semibold text-gray-800">Model:</span> {{ asset.model }}</p>
+        <p><span class="font-semibold text-gray-800">Serial Number:</span> {{ asset.serial_number }}</p>
+        <p><span class="font-semibold text-gray-800">Status:</span> {{ asset.status|capfirst }}</p>
+        <p><span class="font-semibold text-gray-800">Condition:</span> {{ asset.asset_condition|capfirst }}</p>
+    </div>
+
+    <!-- Buttons -->
+    <form method="POST" class="flex flex-col sm:flex-row justify-end gap-3">
+        {% csrf_token %}
+        <button type="submit" 
+                class="bg-red-600 text-white px-5 py-2.5 rounded-md hover:bg-red-700 transition shadow-sm flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 3h6a1 1 0 011 1v1H8V4a1 1 0 011-1z" />
+            </svg>
+            Yes, Delete Asset
+        </button>
+
+        <a href="{% url 'assets:staff_manage_assets' %}" 
+           class="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-md hover:bg-gray-200 transition shadow-sm flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 19l-7-7 7-7" />
+            </svg>
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

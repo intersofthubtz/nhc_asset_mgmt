@@ -1,0 +1,99 @@
+{% extends "accounts/staff_dashboard.html" %}
+
+{% block staff_content %}
+<h2 class="text-2xl font-bold text-nhc-blue mb-3">Manage Requests</h2>
+<p class="text-gray-700 mb-6">Approve or reject asset borrow requests from normal users.</p>
+
+{% if all_requests %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for req in all_requests %}
+    <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4
+        {% if req.status == 'approved' %}border-green-500
+        {% elif req.status == 'rejected' %}border-red-500
+        {% else %}border-nhc-yellow{% endif %}">
+        
+        <h5 class="text-lg font-semibold text-nhc-blue mb-2">
+            Request by {{ req.user.username }}
+        </h5>
+        <p class="text-gray-600 mb-1">Asset: {{ req.asset.get_asset_name_display }} - {{ req.asset.model|default:"N/A" }}</p>
+        <p class="text-gray-600 mb-1">Requested: {{ req.request_date|date:"M d, Y" }}</p>
+        <p class="text-gray-600 mb-3">Return: {{ req.return_date|date:"M d, Y" }}</p>
+
+        <div class="flex gap-2 mt-2">
+            {% if req.status == 'pending' %}
+            <button onclick="openActionModal({{ req.pk }}, 'approve')" 
+                    class="inline-block bg-nhc-blue text-white font-semibold py-2 px-4 rounded-md hover:bg-nhc-black transition">
+                Approve
+            </button>
+            <button onclick="openActionModal({{ req.pk }}, 'reject')" 
+                    class="inline-block bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 transition">
+                Reject
+            </button>
+            {% else %}
+            <span class="inline-block text-sm px-3 py-1 rounded-full 
+                {% if req.status == 'approved' %}bg-green-100 text-green-700
+                {% elif req.status == 'rejected' %}bg-red-100 text-red-700
+                {% elif req.status == 'returned' %}bg-blue-100 text-blue-700
+                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                {{ req.get_status_display }}
+            </span>
+            {% if req.remarks %}
+            <p class="text-gray-600 text-sm mt-1"><strong>Remarks:</strong> {{ req.remarks }}</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white p-6 rounded-xl shadow-md text-center">
+    <p class="text-gray-600">No requests available at the moment.</p>
+</div>
+{% endif %}
+
+<!-- Action Modal -->
+<div id="actionModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-md p-6">
+    <h3 class="text-lg font-semibold text-nhc-blue mb-4" id="modalTitle"></h3>
+    <form method="POST" id="actionForm">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label for="remarks" class="block text-gray-700 font-medium">Remarks (optional)</label>
+        <textarea name="remarks" id="remarks" rows="3"
+                  class="w-full border-gray-300 rounded-md p-2 focus:border-nhc-yellow focus:ring-nhc-yellow"></textarea>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeActionModal()" class="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded-md bg-nhc-blue text-white hover:bg-nhc-black transition" id="modalSubmitBtn">Confirm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openActionModal(requestId, action) {
+    const modal = document.getElementById('actionModal');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('actionForm');
+    const submitBtn = document.getElementById('modalSubmitBtn');
+
+    modal.classList.remove('hidden');
+    title.textContent = action.charAt(0).toUpperCase() + action.slice(1) + " Request";
+
+    form.action = `/requests/manage/${requestId}/${action}/`;
+    submitBtn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+  }
+
+  function closeActionModal() {
+    document.getElementById('actionModal').classList.add('hidden');
+    document.getElementById('remarks').value = '';
+  }
+
+  window.addEventListener('click', function(e) {
+    const modal = document.getElementById('actionModal');
+    if (!modal.classList.contains('hidden') && e.target === modal) {
+      closeActionModal();
+    }
+  });
+</script>
+{% endblock %}

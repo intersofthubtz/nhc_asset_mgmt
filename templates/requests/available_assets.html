@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="w-full max-w-5xl mx-auto mt-6 px-6 sm:px-6 lg:px-4">
+
+  <!-- Header with Back Link -->
+  <div class="flex items-center justify-between mb-6 gap-2">
+    <div>
+      <h2 class="text-3xl font-bold text-nhc-blue">Available Assets</h2>
+      <p class="text-gray-600 mt-1">{{ assets|length }} assets available for borrowing</p>
+    </div>
+    <a href="{% url 'requests:normal_dashboard' %}" class="text-nhc-blue hover:text-nhc-yellow font-semibold flex items-center gap-1 text-sm sm:text-base">
+      <!-- Back arrow icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Assets Table -->
+  <div class="overflow-x-auto bg-white rounded-xl shadow-md">
+    <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+      <caption class="sr-only">List of assets available for borrowing</caption>
+      <thead class="bg-nhc-yellow text-nhc-black">
+        <tr>
+          <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Asset Name</th>
+          <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Model</th>
+          <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Specifications</th>
+          <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Description</th>
+          <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Condition</th>
+          <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for asset in assets %}
+        <tr class="hover:bg-gray-100 transition">
+          <td class="py-2 px-4 font-semibold">{{ asset.asset_name }}</td>
+          <td class="py-2 px-4">{{ asset.model|default:"N/A" }}</td>
+          <td class="py-2 px-4">{{ asset.specifications|default:"-" }}</td>
+          <td class="py-2 px-4">{{ asset.description|default:"-" }}</td>
+          <td class="py-2 px-4">
+            <span class="font-semibold
+              {% if asset.asset_condition == 'good' %}text-green-600
+              {% elif asset.asset_condition == 'fair' %}text-yellow-600
+              {% elif asset.asset_condition == 'poor' %}text-red-600{% endif %}">
+              {{ asset.get_asset_condition_display }}
+            </span>
+          </td>
+          <td class="py-2 px-4">
+            <a href="{% url 'requests:request_asset' asset.id %}" 
+               class="inline-flex items-center gap-1 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 focus:outline-none focus:ring focus:ring-nhc-blue transition">
+              Request
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="py-6 text-center text-gray-500 flex flex-col items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 018 0v2"/>
+            </svg>
+            No assets currently available for borrowing.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

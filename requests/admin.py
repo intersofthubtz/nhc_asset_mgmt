@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import BorrowRequest, AssetReturn
+from .models import AssetRequest, AssetReturn
 
-@admin.register(BorrowRequest)
-class BorrowRequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'asset', 'status', 'request_date', 'start_date', 'end_date', 'approved_by', 'approval_date')
+@admin.register(AssetRequest)
+class AssetRequestAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'asset', 'status', 'request_date', 'return_date', 'approved_by', 'approval_date')
     list_filter = ('status',)
     search_fields = ('user__username', 'asset__asset_name')
 
