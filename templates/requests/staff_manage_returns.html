@@ -1,0 +1,294 @@
+{% extends "accounts/staff_dashboard.html" %}
+{% block staff_content %}
+
+<h2 class="text-2xl font-bold text-nhc-blue mb-3">Manage Returned Assets</h2>
+<p class="text-gray-700 mb-6">Review assets returned by users and record their condition.</p>
+
+{% if all_returns %}
+<!-- Search and Filters -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Search by user, asset, model, or remarks..."
+    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow focus:outline-none"
+  />
+  <div class="flex items-center gap-2 w-full sm:w-auto">
+    <label for="conditionFilter" class="text-gray-700 text-sm font-medium">Condition:</label>
+    <select
+      id="conditionFilter"
+      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow focus:outline-none w-full sm:w-auto"
+    >
+      <option value="all">All</option>
+      <option value="good">Good</option>
+      <option value="damaged">Damaged</option>
+      <option value="lost">Lost</option>
+      <option value="not returned">Not Returned</option>
+    </select>
+  </div>
+</div>
+
+<!-- Returned Assets Table -->
+<div class="overflow-x-auto bg-white shadow-md rounded-xl">
+  <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base" id="returnsTable">
+    <thead class="bg-gray-200 text-nhc-black uppercase font-semibold select-none">
+      <tr>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(0)">User</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(1)">Asset</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(2)">Model</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(3)">Expected Return</th>
+        <th class="py-3 px-4 text-left">Condition</th>
+        <th class="py-3 px-4 text-left">Returned Date</th>
+        <th class="py-3 px-4 text-left">Remarks</th>
+        <th class="py-3 px-4 text-left">Action</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for req in page_obj %}
+        {% with return=req.returns.first %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
+            <td class="py-3 px-4">{{ req.asset.asset_name }}</td>
+            <td class="py-3 px-4">{{ req.asset.model|default:"N/A" }}</td>
+            <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
+
+            <!-- Condition -->
+            <td class="py-3 px-4">
+              {% if return %}
+                <form class="update-condition-form" data-return-id="{{ return.id }}">
+                  <select name="condition" class="border border-gray-300 rounded-md px-2 py-1 text-sm">
+                    {% for key, val in return.CONDITION_CHOICES %}
+                      <option value="{{ key }}" {% if key == return.condition_on_return %}selected{% endif %}>{{ val }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              {% else %}
+                <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-500">Not Returned</span>
+              {% endif %}
+            </td>
+
+            <!-- Returned Date -->
+            <td class="py-3 px-4">{% if return %}{{ return.returned_date|date:"M d, Y" }}{% else %}-{% endif %}</td>
+
+            <!-- Remarks -->
+            <td class="py-3 px-4">{% if return %}{{ return.remarks|default:"-" }}{% else %}-{% endif %}</td>
+
+            <!-- Action -->
+            <td class="py-3 px-4">
+              {% if not return %}
+                <button
+                  type="button"
+                  class="px-3 py-1 bg-nhc-blue text-white rounded-md text-sm mark-return-btn"
+                  data-req-id="{{ req.id }}"
+                  data-user="{{ req.user.username }}"
+                  data-asset="{{ req.asset.asset_name }}">
+                  Mark Returned
+                </button>
+              {% else %}
+                <span class="text-gray-500 text-sm">Completed</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endwith %}
+      {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-gray-500 py-4">No returned assets available.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination Controls -->
+{% if page_obj.has_other_pages %}
+<nav class="flex items-center justify-center mt-6 space-x-1" aria-label="Pagination">
+  <!-- Previous Page Link -->
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
+  {% else %}
+    <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">&laquo; Prev</span>
+  {% endif %}
+
+  <!-- Page Numbers -->
+  {% for num in page_obj.paginator.page_range %}
+    {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+      {% if num == page_obj.number %}
+        <span class="px-3 py-1 bg-nhc-blue text-white rounded">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
+      {% endif %}
+    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+      <a href="?page={{ num }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
+    {% elif num == page_obj.number|add:-3 or num == page_obj.number|add:3 %}
+      <span class="px-2 py-1 text-gray-500">…</span>
+    {% endif %}
+  {% endfor %}
+
+  <!-- Next Page Link -->
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
+  {% else %}
+    <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">Next &raquo;</span>
+  {% endif %}
+</nav>
+{% endif %}
+
+
+<!-- Mark Returned Modal -->
+<div id="returnModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 mx-4 transform transition-all scale-100">
+    <h2 class="text-xl font-bold mb-4 text-center text-nhc-blue">Mark Asset as Returned</h2>
+    <form id="returnForm" method="POST" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="req_id" id="modalReqId">
+
+      <div>
+        <label class="block text-sm font-medium mb-1">User</label>
+        <input type="text" id="modalUser" class="w-full border px-3 py-2 rounded" readonly>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Asset</label>
+        <input type="text" id="modalAsset" class="w-full border px-3 py-2 rounded" readonly>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Condition</label>
+        <select name="condition" class="w-full border px-3 py-2 rounded" required>
+          <option value="good">Good</option>
+          <option value="damaged">Damaged</option>
+          <option value="lost">Lost</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Returned Date</label>
+        <input type="date" name="returned_date" value="{{ today|date:'Y-m-d' }}" class="w-full border px-3 py-2 rounded" required>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Remarks</label>
+        <textarea name="remarks" class="w-full border px-3 py-2 rounded" rows="2" placeholder="Enter remarks..."></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4">
+        <button type="button" onclick="closeReturnModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-nhc-blue text-white rounded hover:bg-blue-700">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+// Open modal
+document.querySelectorAll('.mark-return-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const reqId = this.dataset.reqId;
+    const user = this.dataset.user;
+    const asset = this.dataset.asset;
+
+    document.getElementById('modalReqId').value = reqId;
+    document.getElementById('modalUser').value = user;
+    document.getElementById('modalAsset').value = asset;
+    document.getElementById('returnForm').dataset.reqId = reqId;
+    document.getElementById('returnModal').classList.remove('hidden');
+    document.getElementById('returnModal').classList.add('flex');
+  });
+});
+
+// Close modal
+function closeReturnModal() {
+  const modal = document.getElementById('returnModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+// AJAX submit for Mark Returned
+document.getElementById("returnForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  const form = e.target;
+  const reqId = form.dataset.reqId;
+  const formData = new FormData(form);
+
+  fetch(`/accounts/staff/mark-returned/${reqId}/`, {
+    method: 'POST',
+    headers: {'X-Requested-With': 'XMLHttpRequest'},
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      const row = document.querySelector(`button[data-req-id='${reqId}']`).closest("tr");
+      row.querySelector("td:nth-child(5)").innerHTML = `
+        <form class="update-condition-form" data-return-id="${data.return_id}">
+          <select name="condition" class="border border-gray-300 rounded-md px-2 py-1 text-sm">
+            <option value="good" ${data.condition=="good"?"selected":""}>Good</option>
+            <option value="damaged" ${data.condition=="damaged"?"selected":""}>Damaged</option>
+            <option value="lost" ${data.condition=="lost"?"selected":""}>Lost</option>
+          </select>
+        </form>
+      `;
+      row.querySelector("td:nth-child(6)").innerText = data.returned_date;
+      row.querySelector("td:nth-child(7)").innerText = data.remarks || "-";
+      row.querySelector("td:nth-child(8)").innerHTML = '<span class="text-gray-500 text-sm">Completed</span>';
+      closeReturnModal();
+    }
+  });
+});
+
+// Inline condition update
+document.addEventListener("change", function(e){
+  if(e.target.closest(".update-condition-form")){
+    const form = e.target.closest(".update-condition-form");
+    const returnId = form.dataset.returnId;
+    const formData = new FormData();
+    formData.append("condition", e.target.value);
+    fetch(`/accounts/staff/update-return-condition/${returnId}/`, {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest'},
+      body: formData
+    });
+  }
+});
+
+// Search Filter
+document.getElementById("searchInput").addEventListener("keyup", function(){
+  const filter = this.value.toLowerCase();
+  document.querySelectorAll("#returnsTable tbody tr").forEach(row=>{
+    row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
+  });
+});
+
+// Condition Filter
+document.getElementById("conditionFilter").addEventListener("change", function(){
+  const filter = this.value.toLowerCase();
+  document.querySelectorAll("#returnsTable tbody tr").forEach(row=>{
+    const conditionText = row.querySelector("td:nth-child(5)").textContent.toLowerCase();
+    row.style.display = (filter==='all'||conditionText.includes(filter)) ? "" : "none";
+  });
+});
+
+// Sorting
+let sortDirection = true;
+function sortTable(idx){
+  const table = document.getElementById("returnsTable");
+  const rows = Array.from(table.tBodies[0].rows);
+  const isNumeric = !isNaN(rows[0].cells[idx].innerText.trim());
+  rows.sort((a,b)=>{
+    const aText = a.cells[idx].innerText.trim().toLowerCase();
+    const bText = b.cells[idx].innerText.trim().toLowerCase();
+    return isNumeric ? (sortDirection?aText-bText:bText-aText) : (sortDirection?aText.localeCompare(bText):bText.localeCompare(aText));
+  });
+  rows.forEach(row=>table.tBodies[0].appendChild(row));
+  sortDirection = !sortDirection;
+}
+</script>
+
+{% else %}
+<div class="bg-white p-6 rounded-xl shadow-md text-center">
+  <p class="text-gray-600">No returned assets available at the moment.</p>
+</div>
+{% endif %}
+
+{% endblock %}

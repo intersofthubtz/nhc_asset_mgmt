@@ -2,75 +2,166 @@
 
 {% block staff_content %}
 <h2 class="text-2xl font-bold text-nhc-blue mb-3">Manage Requests</h2>
-<p class="text-gray-700 mb-6">Approve or reject asset borrow requests from normal users.</p>
+{% comment %} <p class="text-gray-700 mb-6">Review, approve, or reject asset borrowing requests from users.</p> {% endcomment %}
 
 {% if all_requests %}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {% for req in all_requests %}
-    <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4
-        {% if req.status == 'approved' %}border-green-500
-        {% elif req.status == 'rejected' %}border-red-500
-        {% else %}border-nhc-yellow{% endif %}">
-        
-        <h5 class="text-lg font-semibold text-nhc-blue mb-2">
-            Request by {{ req.user.username }}
-        </h5>
-        <p class="text-gray-600 mb-1">Asset: {{ req.asset.get_asset_name_display }} - {{ req.asset.model|default:"N/A" }}</p>
-        <p class="text-gray-600 mb-1">Requested: {{ req.request_date|date:"M d, Y" }}</p>
-        <p class="text-gray-600 mb-3">Return: {{ req.return_date|date:"M d, Y" }}</p>
+<!-- Search and Filters -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+  <!-- Search Bar -->
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Search by user, asset, or status..."
+    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow focus:outline-none"
+  >
 
-        <div class="flex gap-2 mt-2">
-            {% if req.status == 'pending' %}
-            <button onclick="openActionModal({{ req.pk }}, 'approve')" 
-                    class="inline-block bg-nhc-blue text-white font-semibold py-2 px-4 rounded-md hover:bg-nhc-black transition">
+  <!-- Status Filter -->
+  <div class="flex items-center gap-2 w-full sm:w-auto">
+    <label for="statusFilter" class="text-gray-700 text-sm font-medium">Show:</label>
+    <select
+      id="statusFilter"
+      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow focus:outline-none w-full sm:w-auto"
+    >
+      <option value="all">All</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+      <option value="returned">Returned</option>
+    </select>
+  </div>
+  
+</div>
+
+<!-- Requests Table -->
+<div class="overflow-x-auto bg-white shadow-md">
+  <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base" id="requestsTable">
+    <thead class="bg-gray-200 text-nhc-black uppercase font-semibold select-none">
+      <tr>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(0)">User</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(1)">Asset</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(2)">Model</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(3)">Requested</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(4)">Return</th>
+        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(5)">Status</th>
+        <th class="py-3 px-4 text-left">Remarks</th>
+        <th class="py-3 px-4 text-center">Action</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for req in all_requests %}
+      <tr class="hover:bg-gray-50 transition">
+        <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
+        <td class="py-3 px-4">{{ req.asset.get_asset_name_display }}</td>
+        <td class="py-3 px-4">{{ req.asset.model|default:"N/A" }}</td>
+        <td class="py-3 px-4">{{ req.request_date|date:"M d, Y" }}</td>
+        <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
+
+        <td class="py-3 px-4">
+          <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-full
+            {% if req.status == 'approved' %}bg-green-100 text-green-700
+            {% elif req.status == 'rejected' %}bg-red-100 text-red-700
+            {% elif req.status == 'returned' %}bg-blue-100 text-blue-700
+            {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+            {{ req.get_status_display }}
+          </span>
+        </td>
+
+        <td class="py-3 px-4 text-gray-600 text-sm">
+          {% if req.remarks %}
+            {{ req.remarks }}
+          {% else %}
+            <span class="text-gray-400 italic">—</span>
+          {% endif %}
+        </td>
+
+        <td class="py-3 px-4 text-center">
+          {% if req.status == 'pending' %}
+            <div class="flex justify-center gap-2">
+              <button onclick="openActionModal({{ req.pk }}, 'approve')" 
+                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-1 px-3 rounded-md transition text-xs sm:text-sm">
                 Approve
-            </button>
-            <button onclick="openActionModal({{ req.pk }}, 'reject')" 
-                    class="inline-block bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 transition">
+              </button>
+              <button onclick="openActionModal({{ req.pk }}, 'reject')" 
+                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md transition text-xs sm:text-sm">
                 Reject
-            </button>
-            {% else %}
-            <span class="inline-block text-sm px-3 py-1 rounded-full 
-                {% if req.status == 'approved' %}bg-green-100 text-green-700
-                {% elif req.status == 'rejected' %}bg-red-100 text-red-700
-                {% elif req.status == 'returned' %}bg-blue-100 text-blue-700
-                {% else %}bg-gray-100 text-gray-700{% endif %}">
-                {{ req.get_status_display }}
-            </span>
-            {% if req.remarks %}
-            <p class="text-gray-600 text-sm mt-1"><strong>Remarks:</strong> {{ req.remarks }}</p>
-            {% endif %}
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
+              </button>
+            </div>
+          {% else %}
+            <span class="text-gray-400 text-sm italic">No action</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% else %}
 <div class="bg-white p-6 rounded-xl shadow-md text-center">
-    <p class="text-gray-600">No requests available at the moment.</p>
+  <p class="text-gray-600">No asset requests available at the moment.</p>
 </div>
 {% endif %}
 
 <!-- Action Modal -->
-<div id="actionModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-md p-6">
+<div id="actionModal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-start justify-center z-50 transition-opacity duration-300">
+  <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-md p-6 mt-10 transform scale-100 transition-all duration-200">
     <h3 class="text-lg font-semibold text-nhc-blue mb-4" id="modalTitle"></h3>
     <form method="POST" id="actionForm">
       {% csrf_token %}
       <div class="mb-4">
         <label for="remarks" class="block text-gray-700 font-medium">Remarks (optional)</label>
         <textarea name="remarks" id="remarks" rows="3"
-                  class="w-full border-gray-300 rounded-md p-2 focus:border-nhc-yellow focus:ring-nhc-yellow"></textarea>
+          class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-nhc-yellow focus:border-nhc-yellow focus:outline-none transition"></textarea>
       </div>
       <div class="flex justify-end gap-3">
-        <button type="button" onclick="closeActionModal()" class="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition">Cancel</button>
-        <button type="submit" class="px-4 py-2 rounded-md bg-nhc-blue text-white hover:bg-nhc-black transition" id="modalSubmitBtn">Confirm</button>
+        <button type="button" onclick="closeActionModal()" 
+          class="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition">Cancel</button>
+        <button type="submit" 
+          class="px-4 py-2 rounded-md bg-nhc-blue text-white hover:bg-nhc-black transition" 
+          id="modalSubmitBtn">Confirm</button>
       </div>
     </form>
   </div>
 </div>
 
+
+<!-- Scripts -->
 <script>
+  // 🔍 Search Filter
+  document.getElementById("searchInput").addEventListener("keyup", function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll("#requestsTable tbody tr").forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(filter) ? "" : "none";
+    });
+  });
+
+  // 🔽 Status Filter
+  document.getElementById("statusFilter").addEventListener("change", function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll("#requestsTable tbody tr").forEach(row => {
+      const status = row.querySelector("td:nth-child(6)").innerText.toLowerCase();
+      row.style.display = (filter === "all" || status.includes(filter)) ? "" : "none";
+    });
+  });
+
+  // ⬆️ Sorting
+  let sortDirection = true;
+  function sortTable(columnIndex) {
+    const table = document.getElementById("requestsTable");
+    const rows = Array.from(table.tBodies[0].rows);
+    const isNumeric = !isNaN(rows[0].cells[columnIndex].innerText.trim());
+    rows.sort((a, b) => {
+      const aText = a.cells[columnIndex].innerText.trim().toLowerCase();
+      const bText = b.cells[columnIndex].innerText.trim().toLowerCase();
+      return isNumeric 
+        ? (sortDirection ? aText - bText : bText - aText)
+        : (sortDirection ? aText.localeCompare(bText) : bText.localeCompare(aText));
+    });
+    rows.forEach(row => table.tBodies[0].appendChild(row));
+    sortDirection = !sortDirection;
+  }
+
+  // 🪟 Modal Handling
   function openActionModal(requestId, action) {
     const modal = document.getElementById('actionModal');
     const title = document.getElementById('modalTitle');
@@ -78,9 +169,8 @@
     const submitBtn = document.getElementById('modalSubmitBtn');
 
     modal.classList.remove('hidden');
-    title.textContent = action.charAt(0).toUpperCase() + action.slice(1) + " Request";
-
-    form.action = `/requests/manage/${requestId}/${action}/`;
+    title.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Request`;
+    form.action = `/accounts/staff/staff/request/${requestId}/${action}/`;
     submitBtn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
   }
 
@@ -89,11 +179,9 @@
     document.getElementById('remarks').value = '';
   }
 
-  window.addEventListener('click', function(e) {
+  window.addEventListener('click', e => {
     const modal = document.getElementById('actionModal');
-    if (!modal.classList.contains('hidden') && e.target === modal) {
-      closeActionModal();
-    }
+    if (!modal.classList.contains('hidden') && e.target === modal) closeActionModal();
   });
 </script>
 {% endblock %}

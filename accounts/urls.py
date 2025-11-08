@@ -15,5 +15,5 @@ urlpatterns = [
     path('staff/manage-assets/', views.staff_manage_assets, name='staff_manage_assets'),
     path('staff/manage-requests/', views.staff_manage_requests, name='staff_manage_requests'),
     path('staff/report/', views.staff_report, name='staff_report'),
-    path('normal/dashboard/', views.normal_dashboard, name='normal_dashboard'),
+    path('dashboard/', views.normal_dashboard, name='normal_dashboard'),
 ]

@@ -6,7 +6,7 @@
   <div class="flex items-center justify-between mb-6 gap-2">
     <div>
       <h2 class="text-3xl font-bold text-nhc-blue">My Asset Requests</h2>
-      <p class="text-gray-600 mt-1">{{ requests|length }} requests made</p>
+      <p class="text-gray-600 mt-1">{{ requests.paginator.count }} requests made</p>
     </div>
     <a href="{% url 'requests:normal_dashboard' %}" class="text-nhc-blue hover:text-nhc-yellow font-semibold flex items-center gap-1 text-sm sm:text-base">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -16,11 +16,26 @@
     </a>
   </div>
 
+  <!-- Search & Filter -->
+  <form method="get" id="searchForm" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by asset name or model" 
+           class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-nhc-blue w-full sm:w-1/2" 
+           id="searchInput">
+
+    <select name="status" id="statusSelect" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-nhc-blue">
+      <option value="">All Statuses</option>
+      <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+      <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+      <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+    </select>
+  </form>
+
   <!-- Requests Table -->
-  <div class="overflow-x-auto bg-white rounded-xl shadow-md">
+  <div class="overflow-x-auto bg-white shadow-md rounded-md">
     <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
       <caption class="sr-only">List of my asset requests</caption>
-      <thead class="bg-nhc-yellow text-nhc-black">
+      <thead class="bg-gray-200 text-nhc-black">
         <tr>
           <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Asset</th>
           <th scope="col" class="py-3 px-4 text-left font-medium uppercase">Request Date</th>
@@ -33,7 +48,7 @@
       <tbody class="divide-y divide-gray-100">
         {% for r in requests %}
         <tr class="hover:bg-gray-100 transition">
-          <td class="py-2 px-4 font-semibold">{{ r.asset.get_asset_name_display }} - {{ r.asset.model|default:"N/A" }}</td>
+          <td class="py-2 px-4 font-semibold">{{ r.asset.asset_name }} - {{ r.asset.model|default:"N/A" }}</td>
           <td class="py-2 px-4">{{ r.request_date|date:"M d, Y" }}</td>
           <td class="py-2 px-4">{{ r.return_date|date:"M d, Y" }}</td>
           <td class="py-2 px-4">
@@ -79,5 +94,57 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  {% if requests.has_other_pages %}
+  <div class="flex justify-center items-center mt-6 gap-2 text-sm sm:text-base">
+    {% if requests.has_previous %}
+      <a href="?page={{ requests.previous_page_number }}&q={{ query }}&status={{ status_filter }}" class="px-3 py-1 bg-nhc-blue text-white rounded hover:bg-nhc-yellow transition">Previous</a>
+    {% else %}
+      <span class="px-3 py-1 bg-gray-300 text-gray-500 rounded cursor-not-allowed">Previous</span>
+    {% endif %}
+
+    {% for num in requests.paginator.page_range %}
+      {% if num == requests.number %}
+        <span class="px-3 py-1 bg-nhc-yellow text-nhc-black rounded font-semibold">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}&q={{ query }}&status={{ status_filter }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-nhc-yellow hover:text-nhc-black transition">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if requests.has_next %}
+      <a href="?page={{ requests.next_page_number }}&q={{ query }}&status={{ status_filter }}" class="px-3 py-1 bg-nhc-blue text-white rounded hover:bg-nhc-yellow transition">Next</a>
+    {% else %}
+      <span class="px-3 py-1 bg-gray-300 text-gray-500 rounded cursor-not-allowed">Next</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
 </div>
+
+<!-- Automatic search/filter script -->
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const statusSelect = document.getElementById('statusSelect');
+  const searchForm = document.getElementById('searchForm');
+
+  let typingTimer;
+  const typingDelay = 500; // 0.5s delay
+
+  searchInput.addEventListener('keyup', () => {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+      searchForm.submit();
+    }, typingDelay);
+  });
+
+  searchInput.addEventListener('keydown', () => {
+    clearTimeout(typingTimer);
+  });
+
+  statusSelect.addEventListener('change', () => {
+    searchForm.submit();
+  });
+</script>
+
 {% endblock %}

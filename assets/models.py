@@ -1,12 +1,14 @@
 from django.db import models
 from django.conf import settings
 
+
 class Asset(models.Model):
     STATUS_CHOICES = [
         ('available', 'Available'),
         ('borrowed', 'Borrowed'),
         ('maintenance', 'Maintenance'),
         ('retired', 'Retired'),
+        ('returned', 'Returned'),
     ]
 
     CONDITION_CHOICES = [
@@ -22,15 +24,13 @@ class Asset(models.Model):
         ('printer', 'Printer'),
         ('projector', 'Projector'),
         ('furniture', 'Furniture'),
-        # Add more as needed
     ]
 
-    # Use CATEGORY_CHOICES for asset_name
     asset_name = models.CharField(
         max_length=50,
         choices=CATEGORY_CHOICES,
         default='laptop'
-    )  
+    )
     model = models.CharField(max_length=100, blank=True, null=True)
     serial_number = models.CharField(max_length=150, unique=True, blank=True, null=True)
     barcode = models.CharField(max_length=150, unique=True, blank=True, null=True)
@@ -49,5 +49,3 @@ class Asset(models.Model):
 
     def __str__(self):
         return f"{self.asset_name} ({self.model})"
-
-

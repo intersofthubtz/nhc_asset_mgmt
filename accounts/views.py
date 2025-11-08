@@ -3,6 +3,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from functools import wraps
+
+from assets.models import Asset
+from requests.models import AssetRequest
 from .forms import UserRegistrationForm, UserLoginForm
 
 # --- Decorators ---
@@ -124,10 +127,28 @@ def staff_report(request):
 
 
 
-
-
 @login_required
 @roles_required('normal')
 @nocache
+@login_required
 def normal_dashboard(request):
-    return render(request, 'accounts/normal_dashboard.html')
+    # Total available assets
+    total_available_assets = Asset.objects.filter(status='available').count()
+
+    # Count of user's requests by status
+    pending_requests_count = AssetRequest.objects.filter(user=request.user, status='pending').count()
+    approved_requests_count = AssetRequest.objects.filter(user=request.user, status='returned').count()
+    rejected_requests_count = AssetRequest.objects.filter(user=request.user, status='rejected').count()
+
+    # Total processed requests (only approved + rejected)
+    processed_requests_count = approved_requests_count + rejected_requests_count
+
+    context = {
+        'total_assets': total_available_assets,
+        'pending_requests_count': pending_requests_count,
+        'processed_requests_count': processed_requests_count,
+        'approved_requests_count': approved_requests_count,
+        'rejected_requests_count': rejected_requests_count,
+    }
+
+    return render(request, 'accounts/normal_dashboard.html', context)

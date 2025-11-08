@@ -13,57 +13,33 @@ class AssetRequest(models.Model):
         ('returned', 'Returned'),
     ]
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='asset_requests',
-        help_text="User who requested the asset"
-    )
-    asset = models.ForeignKey(
-        Asset,
-        on_delete=models.CASCADE,
-        related_name='asset_requests',
-        help_text="The asset being requested"
-    )
-
-    # User can select both dates
-    request_date = models.DateField(help_text="Date when the asset is requested")
-    return_date = models.DateField(help_text="Expected return date")
-
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='asset_requests')
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='asset_requests')
+    request_date = models.DateField()
+    return_date = models.DateField()
     remarks = models.TextField(blank=True, null=True)
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    approved_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='approved_asset_requests',
-        help_text="Staff member who approved this request"
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_asset_requests')
     approval_date = models.DateTimeField(null=True, blank=True)
 
     def clean(self):
-        """Validate date logic."""
         today = timezone.localdate()
-
         if self.request_date < today:
             raise ValidationError("Request date cannot be before today.")
-
         if self.return_date < self.request_date:
             raise ValidationError("Return date cannot be earlier than the request date.")
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.status == 'approved':
+            self.asset.status = 'borrowed'
+        elif self.status in ['returned', 'rejected']:
+            if not AssetRequest.objects.filter(asset=self.asset, status='approved').exclude(pk=self.pk).exists():
+                self.asset.status = 'available'
+        self.asset.save()
+
     def __str__(self):
         return f"{self.user.username} → {self.asset.asset_name} ({self.status})"
-
-    class Meta:
-        ordering = ['-request_date']
-        verbose_name = "Asset Request"
-        verbose_name_plural = "Asset Requests"
-
 
 
 class AssetReturn(models.Model):
@@ -73,24 +49,10 @@ class AssetReturn(models.Model):
         ('lost', 'Lost'),
     ]
 
-    borrow_request = models.ForeignKey(
-        AssetRequest,
-        on_delete=models.CASCADE,
-        related_name='returns'
-    )
+    borrow_request = models.ForeignKey(AssetRequest, on_delete=models.CASCADE, related_name='returns')
     returned_date = models.DateTimeField(auto_now_add=True)
-    condition_on_return = models.CharField(
-        max_length=10,
-        choices=CONDITION_CHOICES,
-        default='good'
-    )
-    received_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='received_returns'
-    )
+    condition_on_return = models.CharField(max_length=10, choices=CONDITION_CHOICES, default='good')
+    received_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='received_returns')
     remarks = models.TextField(blank=True, null=True)
 
     def __str__(self):
@@ -98,5 +60,3 @@ class AssetReturn(models.Model):
 
     class Meta:
         ordering = ['-returned_date']
-        verbose_name = "Asset Return"
-        verbose_name_plural = "Asset Returns"

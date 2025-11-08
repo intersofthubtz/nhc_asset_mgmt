@@ -1,5 +1,7 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% block content %}
 <div class="max-w-7xl mx-auto mt-6 px-2">
+
   <!-- Header -->
   <div class="mb-3">
     <h2 class="text-3xl font-bold text-nhc-blue">User Dashboard</h2>
@@ -12,31 +14,18 @@
 
   <!-- Quick Stats Cards -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-    <!-- Total Assets -->
+    <!-- Total Available Assets -->
     <div
       class="bg-white p-5 rounded-xl shadow-md flex flex-col items-start border-t-4 border-nhc-yellow hover:shadow-xl transition transform hover:-translate-y-1"
     >
       <div class="flex items-center gap-3 mb-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-nhc-yellow"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M9 12h6m-6 4h6M5 6h14M5 6v14h14V6H5z"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-nhc-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M5 6h14M5 6v14h14V6H5z"/>
         </svg>
         <h5 class="text-lg font-semibold text-nhc-blue">Total Available Assets</h5>
       </div>
       <span class="text-gray-600 text-sm">Available assets in the system</span>
-      <span
-        class="mt-2 inline-block bg-nhc-blue text-white px-3 py-1 rounded-full text-sm"
-      >
+      <span class="mt-2 inline-block bg-nhc-blue text-white px-3 py-1 rounded-full text-sm">
         {{ total_assets|default:"0" }}
       </span>
     </div>
@@ -46,45 +35,36 @@
       class="bg-white p-5 rounded-xl shadow-md flex flex-col items-start border-t-4 border-nhc-blue hover:shadow-xl transition transform hover:-translate-y-1"
     >
       <div class="flex items-center gap-3 mb-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-nhc-blue"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M8 17l4 4 4-4m0-10l-4-4-4 4"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-nhc-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 17l4 4 4-4m0-10l-4-4-4 4"/>
         </svg>
         <h5 class="text-lg font-semibold text-nhc-blue">Pending Requests</h5>
       </div>
       <span class="text-gray-600 text-sm">Requests awaiting approval</span>
-      <span
-        class="mt-2 inline-block bg-nhc-yellow text-nhc-black px-3 py-1 rounded-full text-sm"
-      >
+      <span class="mt-2 inline-block bg-nhc-yellow text-nhc-black px-3 py-1 rounded-full text-sm">
         {{ pending_requests_count|default:"0" }}
       </span>
     </div>
 
-    <!-- Processed Requests -->
+    <!-- Processed Requests (Approved + Rejected) -->
     <div
       class="bg-white p-5 rounded-xl shadow-md flex flex-col items-start border-t-4 border-green-500 hover:shadow-xl transition transform hover:-translate-y-1"
     >
       <div class="flex items-center gap-3 mb-2">
         <h5 class="text-lg font-semibold text-nhc-blue">Processed Requests</h5>
       </div>
-      <span class="text-gray-600 text-sm"
-        >Returned requests for assets</span
-      >
-      <span
-        class="mt-2 inline-block bg-green-500 text-white px-3 py-1 rounded-full text-sm"
-      >
-        {{ processed_requests_count }}
+      <span class="text-gray-600 text-sm">Approved or rejected requests</span>
+
+      <!-- Total processed -->
+      <span class="mt-2 inline-block bg-green-500 text-white px-3 py-1 rounded-full text-sm">
+        {{ processed_requests_count|default:"0" }}
       </span>
+
+      <!-- Breakdown badges -->
+      <div class="mt-2 flex gap-2 text-xs sm:text-sm">
+        <span class="bg-green-600 text-white px-2 py-1 rounded">Approved: {{ approved_requests_count|default:"0" }}</span>
+        <span class="bg-red-600 text-white px-2 py-1 rounded">Rejected: {{ rejected_requests_count|default:"0" }}</span>
+      </div>
     </div>
   </div>
 
@@ -95,43 +75,18 @@
       class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-nhc-yellow hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
     >
       <div class="flex items-center gap-4 mb-4">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-nhc-yellow"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3 7h18M3 12h18M3 17h18"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-nhc-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
         </svg>
         <h5 class="text-lg font-semibold text-nhc-blue">Available Assets</h5>
       </div>
       <p class="text-gray-600 mb-4">
         See all available assets you can borrow from the inventory.
       </p>
-      <a
-        href="{% url 'requests:available_assets' %}"
-        class="inline-flex items-center gap-2 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition"
-      >
+      <a href="{% url 'requests:available_assets' %}" class="inline-flex items-center gap-2 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
         View Assets
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M17 8l4 4m0 0l-4 4m4-4H3"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
         </svg>
       </a>
     </div>
@@ -141,43 +96,18 @@
       class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-nhc-blue hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
     >
       <div class="flex items-center gap-4 mb-4">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-nhc-blue"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M5 13l4 4L19 7"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-nhc-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
         </svg>
         <h5 class="text-lg font-semibold text-nhc-blue">My Borrow Requests</h5>
       </div>
       <p class="text-gray-600 mb-4">
         Check the status of your asset requests and track approvals.
       </p>
-      <a
-        href="{% url 'requests:my_requests' %}"
-        class="inline-flex items-center gap-2 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition"
-      >
+      <a href="{% url 'requests:my_requests' %}" class="inline-flex items-center gap-2 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
         View Requests
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M17 8l4 4m0 0l-4 4m4-4H3"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
         </svg>
       </a>
     </div>
