@@ -11,10 +11,11 @@ from django.core.paginator import Paginator
 @login_required
 def staff_manage_assets(request):
     assets = Asset.objects.all().order_by('asset_name')
-    paginator = Paginator(assets, 5)  
+    paginator = Paginator(assets, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'assets/staff_manage_assets.html', {'page_obj': page_obj})
+
 
 @login_required
 def asset_detail(request, pk):
