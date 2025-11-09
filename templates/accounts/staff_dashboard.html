@@ -1,50 +1,116 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block content %}
-<div class="flex flex-col md:flex-row w-full max-w-7xl mx-auto mt-6 gap-6 px-4 relative">
-
-  <!-- Sidebar (Desktop) -->
-  <aside class="hidden md:flex flex-col w-64 bg-white rounded-xl shadow-md p-5 flex-shrink-0" id="sidebar">
+{% extends "base.html" %} {% load static %} {% block content %}
+<div
+  class="flex flex-col md:flex-row w-full max-w-7xl mx-auto mt-6 gap-6 px-4 relative"
+>
+  <!-- Sidebar -->
+  <aside
+    class="hidden md:flex flex-col w-64 bg-white rounded-xl shadow-md p-5 flex-shrink-0"
+    id="sidebar"
+  >
     <h2 class="text-xl font-bold text-nhc-blue mb-6">STAFF Menu</h2>
     <nav class="flex flex-col space-y-3">
-      <a href="{% url 'staff_dashboard' %}" 
-         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/dashboard/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M4 10v10h16V10" />
+      <a
+        href="{% url 'staff_dashboard' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/dashboard/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 12l9-9 9 9M4 10v10h16V10"
+          />
         </svg>
         Dashboard
       </a>
 
-      <a href="{% url 'assets:staff_manage_assets' %}" 
-         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-assets/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M5 6h14M5 6v14h14V6H5z"/>
+      <a
+        href="{% url 'assets:staff_manage_assets' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-assets/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 12h6m-6 4h6M5 6h14M5 6v14h14V6H5z"
+          />
         </svg>
         Manage Assets
       </a>
 
-      <a href="{% url 'requests:staff_manage_requests' %}" 
-         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-requests/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/>
+      <a
+        href="{% url 'requests:staff_manage_requests' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-requests/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"
+          />
         </svg>
         Manage Requests
       </a>
 
-      <a href="{% url 'requests:staff_manage_returns' %}" 
-         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-returns/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
+      <a
+        href="{% url 'requests:staff_manage_returns' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-returns/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 7h18M3 12h18M3 17h18"
+          />
         </svg>
         Returned Assets
       </a>
 
-      <a href="{% url 'staff_report' %}" 
-         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/report/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <a
+        href="{% url 'staff_report' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/report/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 14h3v7H7zM12 10h3v11h-3zM17 6h3v15h-3z"/>
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M7 14h3v7H7zM12 10h3v11h-3zM17 6h3v15h-3z"
+          />
         </svg>
         Report
       </a>
@@ -52,10 +118,100 @@
   </aside>
 
   <!-- Main Content -->
-  <div id="mainContent" class="flex-grow bg-white rounded-xl shadow-md p-4 md:p-6 z-10 relative transition-all duration-300">
+  <div
+    id="mainContent"
+    class="flex-grow bg-white rounded-xl shadow-md p-6 md:p-6 z-10 relative transition-all duration-300"
+  >
     {% block staff_content %}
-    <!-- Staff content will render here -->
+    <h2 class="text-2xl font-bold text-nhc-blue mb-4">Staff Dashboard</h2>
+    <p class="text-gray-700 mb-6">Overview of assets, requests, and returns.</p>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-blue">
+    <p class="text-sm font-medium text-gray-500">Total Assets</p>
+    <h3 class="text-2xl font-bold text-nhc-blue">{{ total_assets }}</h3>
+  </div>
+
+  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-yellow">
+    <p class="text-sm font-medium text-gray-500">Pending Requests</p>
+    <h3 class="text-2xl font-bold text-nhc-yellow">{{ pending_requests }}</h3>
+  </div>
+
+  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-green">
+    <p class="text-sm font-medium text-gray-500">Approved Assets</p>
+    <h3 class="text-2xl font-bold text-nhc-green">{{ approved_assets }}</h3>
+  </div>
+
+  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-purple">
+    <p class="text-sm font-medium text-gray-500">Returned Assets</p>
+    <h3 class="text-2xl font-bold text-nhc-purple">{{ returned_assets }}</h3>
+  </div>
+</div>
+
+
+    <!-- Recent Requests Table -->
+    <div class="bg-white shadow-md rounded-xl p-4">
+      <h3 class="text-lg font-semibold text-nhc-blue mb-3">Recent Requests</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-100 uppercase font-semibold">
+            <tr>
+              <th class="px-3 py-2 text-left">User</th>
+              <th class="px-3 py-2 text-left">Asset</th>
+              <th class="px-3 py-2 text-left">Status</th>
+              <th class="px-3 py-2 text-left">Request Date</th>
+              <th class="px-3 py-2 text-left">Return Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for req in recent_requests %}
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-3 py-2 font-medium">{{ req.user.username }}</td>
+              <td class="px-3 py-2">
+                {{ req.asset.asset_name }} ({{ req.asset.model }})
+              </td>
+              <td class="px-3 py-2">
+                <span
+                  class="px-2 py-1 rounded-full text-xs {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700{% elif req.status == 'approved' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}"
+                >
+                  {{ req.status|capfirst }}
+                </span>
+              </td>
+              <td class="px-3 py-2">{{ req.request_date|date:"M d, Y" }}</td>
+              <td class="px-3 py-2">{{ req.return_date|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-gray-500">
+                No recent requests
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
     {% endblock %}
   </div>
 </div>
+
+<!-- CSRF Script -->
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  window.csrftoken = getCookie("csrftoken");
+</script>
 {% endblock %}

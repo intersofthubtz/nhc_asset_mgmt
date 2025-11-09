@@ -14,10 +14,9 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/accounts/login/', permanent=False)),
 
     # Correct inclusion for the assets app
-    path('accounts/', include('assets.urls', namespace='assets')),
-    path('accounts/', include('requests.urls', namespace='requests')), 
+    path('assets/', include('assets.urls', namespace='assets')),
+    path('requests/', include('requests.urls', namespace='requests')),
 ]
-
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

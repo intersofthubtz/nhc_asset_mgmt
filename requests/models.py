@@ -10,7 +10,6 @@ class AssetRequest(models.Model):
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
-        ('returned', 'Returned'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='asset_requests')

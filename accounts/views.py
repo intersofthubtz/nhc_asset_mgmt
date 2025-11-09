@@ -3,10 +3,13 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from functools import wraps
-
+from django.db.models import Count
+from django.http import HttpResponse
+from django.utils import timezone
 from assets.models import Asset
 from requests.models import AssetRequest
 from .forms import UserRegistrationForm, UserLoginForm
+import logging
 
 # --- Decorators ---
 
@@ -15,9 +18,12 @@ def roles_required(*roles):
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
-            if not request.user.is_authenticated or request.user.role not in roles:
-                messages.error(request, "Access denied.")
+            if not request.user.is_authenticated:
+                messages.error(request, "Please login first.")
                 return redirect('login')
+            if request.user.role not in roles:
+                messages.error(request, "Access denied.")
+                return redirect('permission_denied')  # Optional: create a dedicated page
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -36,31 +42,29 @@ def nocache(view_func):
 
 def login_user(request):
     if request.user.is_authenticated:
-        # Already logged in → redirect by role
-        if request.user.role == 'admin':
-            return redirect('admin_dashboard')
-        elif request.user.role == 'staff':
-            return redirect('staff_dashboard')
-        else:
-            return redirect('normal_dashboard')
+        # Redirect based on role
+        redirect_map = {
+            'admin': 'admin_dashboard',
+            'staff': 'staff_dashboard',
+            'normal': 'normal_dashboard'
+        }
+        return redirect(redirect_map.get(request.user.role, 'login'))
 
     if request.method == 'POST':
         form = UserLoginForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data['user']
             login(request, user)
-            # Redirect by role
-            if user.role == 'admin':
-                return redirect('admin_dashboard')
-            elif user.role == 'staff':
-                return redirect('staff_dashboard')
-            else:
-                return redirect('normal_dashboard')
+            redirect_map = {
+                'admin': 'admin_dashboard',
+                'staff': 'staff_dashboard',
+                'normal': 'normal_dashboard'
+            }
+            return redirect(redirect_map.get(user.role, 'login'))
         else:
             messages.error(request, "Invalid email or password.")
     else:
         form = UserLoginForm()
-
     return render(request, 'accounts/login.html', {'form': form})
 
 @login_required
@@ -69,7 +73,7 @@ def logout_user(request):
     messages.success(request, "Logged out successfully.")
     return redirect('login')
 
-# --- Admin Registration ---
+# --- User Registration (Admin Only) ---
 
 @login_required
 @roles_required('admin')
@@ -92,63 +96,122 @@ def register_user(request):
 def admin_dashboard(request):
     return render(request, 'accounts/admin_dashboard.html')
 
-@login_required
-@roles_required('staff')
-@nocache
+
+
+logger = logging.getLogger(__name__)
+
 def staff_dashboard(request):
-    return render(request, 'accounts/staff_dashboard.html')
+    # Total assets
+    total_assets = Asset.objects.count()
+
+    # Pending requests
+    pending_requests = AssetRequest.objects.filter(status='pending').count()
+
+    # Approved assets (borrowed)
+    approved_assets_qs = Asset.objects.filter(status='borrowed')
+    approved_assets = approved_assets_qs.count()
+
+    # Returned assets
+    returned_assets_qs = Asset.objects.filter(status='returned')
+    returned_assets = returned_assets_qs.count()
+
+    # Debug output
+    print("=== STAFF DASHBOARD DEBUG ===")
+    print(f"Total Assets: {total_assets}")
+    print(f"Pending Requests: {pending_requests}")
+    print(f"Approved Assets (borrowed): {approved_assets}")
+    print(f"Returned Assets: {returned_assets}")
+    print("Approved Assets List:", list(approved_assets_qs.values('id', 'asset_name', 'status')))
+    print("Returned Assets List:", list(returned_assets_qs.values('id', 'asset_name', 'status')))
+    print("============================")
+
+    # Recent requests
+    recent_requests = AssetRequest.objects.order_by('-request_date')[:5]
+
+    context = {
+        'total_assets': total_assets,
+        'pending_requests': pending_requests,
+        'approved_assets': approved_assets,
+        'returned_assets': returned_assets,
+        'recent_requests': recent_requests,
+    }
+    return render(request, 'accounts/staff_dashboard.html', context)
+
+
+
+# @login_required
+# @roles_required('staff')
+# @nocache
+# def staff_dashboard(request):
+#     # Total assets
+#     total_assets = Asset.objects.count()
+
+#     # Pending requests (from AssetRequest)
+#     pending_requests = AssetRequest.objects.filter(status='pending').count()
+
+#     # Approved assets (from Asset model)
+#     approved_assets = Asset.objects.filter(status='borrowed').count()
+
+#     # Returned assets (from Asset model)
+#     returned_assets = Asset.objects.filter(status='returned').count()
+
+#     # Recent requests (latest 5)
+#     recent_requests = AssetRequest.objects.order_by('-request_date')[:5]
+
+#     context = {
+#         'total_assets': total_assets,
+#         'pending_requests': pending_requests,
+#         'approved_assets': approved_assets,
+#         'returned_assets': returned_assets,
+#         'recent_requests': recent_requests,
+#     }
+#     return render(request, 'accounts/staff_dashboard.html', context)
+
+
+
+
 
 @login_required
-@roles_required('staff')
-@nocache
 def staff_dashboard(request):
-    return render(request, 'accounts/staff_dashboard.html')
+    total_assets = Asset.objects.count()
+    pending_requests = AssetRequest.objects.filter(status='pending').count()
+    returned_assets = AssetRequest.objects.filter(status='returned').count()
+    overdue_returns = AssetRequest.objects.filter(
+        status='approved', return_date__lt=timezone.localdate()
+    ).count()
+    recent_requests = AssetRequest.objects.order_by('-request_date')[:5]
 
+    context = {
+        'total_assets': total_assets,
+        'pending_requests': pending_requests,
+        'returned_assets': returned_assets,
+        'overdue_returns': overdue_returns,
+        'recent_requests': recent_requests,
+    }
+    return render(request, 'accounts/staff_dashboard.html', context)
 @login_required
 @roles_required('staff')
 @nocache
 def staff_manage_assets(request):
-    # Fetch assets if needed
-    return render(request, 'assets/staff_manage_assets.html')
+    assets = Asset.objects.all()
+    return render(request, 'assets/staff_manage_assets.html', {'assets': assets})
 
 @login_required
 @roles_required('staff')
 @nocache
 def staff_manage_requests(request):
-    # Fetch requests if needed
-    return render(request, 'requests/staff_manage_requests.html')
+    requests = AssetRequest.objects.select_related('user', 'asset').all()
+    return render(request, 'requests/staff_manage_requests.html', {'requests': requests})
 
 @login_required
 @roles_required('staff')
 @nocache
 def staff_report(request):
-    # Generate reports if needed
+    # Optional: pass data for reports
     return render(request, 'assets/staff_report.html')
-
-
 
 @login_required
 @roles_required('normal')
 @nocache
-@login_required
 def normal_dashboard(request):
-    # Total available assets
-    total_available_assets = Asset.objects.filter(status='available').count()
-
-    # Count of user's requests by status
-    pending_requests_count = AssetRequest.objects.filter(user=request.user, status='pending').count()
-    approved_requests_count = AssetRequest.objects.filter(user=request.user, status='returned').count()
-    rejected_requests_count = AssetRequest.objects.filter(user=request.user, status='rejected').count()
-
-    # Total processed requests (only approved + rejected)
-    processed_requests_count = approved_requests_count + rejected_requests_count
-
-    context = {
-        'total_assets': total_available_assets,
-        'pending_requests_count': pending_requests_count,
-        'processed_requests_count': processed_requests_count,
-        'approved_requests_count': approved_requests_count,
-        'rejected_requests_count': rejected_requests_count,
-    }
-
-    return render(request, 'accounts/normal_dashboard.html', context)
+    return render(request, 'accounts/normal_dashboard.html')

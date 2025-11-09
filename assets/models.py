@@ -12,7 +12,6 @@ class Asset(models.Model):
     ]
 
     CONDITION_CHOICES = [
-        ('new', 'New'),
         ('good', 'Good'),
         ('fair', 'Fair'),
         ('poor', 'Poor'),
@@ -23,7 +22,6 @@ class Asset(models.Model):
         ('desktop', 'Desktop'),
         ('printer', 'Printer'),
         ('projector', 'Projector'),
-        ('furniture', 'Furniture'),
     ]
 
     asset_name = models.CharField(

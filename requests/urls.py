@@ -13,12 +13,12 @@ urlpatterns = [
     path('my-requests/<int:pk>/cancel/', views.cancel_request, name='cancel_request'),
     
     # Staff routes
-    path('staff/manage-requests/', views.staff_manage_requests, name='staff_manage_requests'),
-    path('staff/request/<int:pk>/<str:action>/', views.update_request_status, name='update_request_status'),
+    path('manage-requests/', views.staff_manage_requests, name='staff_manage_requests'),
+    path('request/<int:pk>/<str:action>/', views.update_request_status, name='update_request_status'),
 
-    path('staff/manage-returns/', views.staff_manage_returns, name='staff_manage_returns'),
-    path('staff/mark-returned/<int:req_id>/', views.staff_mark_returned, name='staff_mark_returned'),
-    path('staff/update-return-condition/<int:return_id>/', views.staff_update_return_condition, name='staff_update_return_condition'),
+    path('manage-returns/', views.staff_manage_returns, name='staff_manage_returns'),
+    path('mark-returned/<int:req_id>/', views.staff_mark_returned, name='staff_mark_returned'),
+    path('update-return-condition/<int:return_id>/', views.staff_update_return_condition, name='staff_update_return_condition'),
 
 
 ]

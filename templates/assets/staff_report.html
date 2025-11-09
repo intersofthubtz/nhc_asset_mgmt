@@ -2,20 +2,67 @@
 
 {% block staff_content %}
 <h2 class="text-2xl font-bold text-nhc-blue mb-3">Reports</h2>
-<p class="text-gray-700 mb-6">View asset usage, request statistics, and generate reports.</p>
+<p class="text-gray-700 mb-6">Generate asset usage or request summary reports in Excel format.</p>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Sample Report Card -->
+    <!-- Asset Usage Report -->
     <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
         <h5 class="text-lg font-semibold text-nhc-blue mb-2">Asset Usage Report</h5>
         <p class="text-gray-600 mb-3">Track how often each asset has been borrowed.</p>
-        <a href="#" class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">View Report</a>
+        <button onclick="openReportModal('asset_usage')" 
+                class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
+            Export Report
+        </button>
     </div>
 
+    <!-- Request Summary -->
     <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
         <h5 class="text-lg font-semibold text-nhc-blue mb-2">Request Summary</h5>
         <p class="text-gray-600 mb-3">See pending, approved, and rejected requests.</p>
-        <a href="#" class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">View Report</a>
+        <button onclick="openReportModal('request_summary')" 
+                class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
+            Export Report
+        </button>
     </div>
 </div>
+
+<!-- Report Modal (Positioned near top) -->
+<div id="reportModal" class="fixed inset-x-0 top-10 bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 mx-auto transform transition-all scale-100">
+        <h2 class="text-xl font-bold mb-4 text-center text-nhc-blue">Select Date Range (Optional)</h2>
+        <form id="reportForm" method="GET" target="_blank" action="">
+            <input type="hidden" name="report_type" id="modalReportType">
+
+            <div class="mb-3">
+                <label class="block text-sm font-medium mb-1">Start Date <span class="text-gray-400 text-xs">(optional)</span></label>
+                <input type="date" name="start_date" class="w-full border px-3 py-2 rounded" placeholder="Leave empty for all data">
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm font-medium mb-1">End Date <span class="text-gray-400 text-xs">(optional)</span></label>
+                <input type="date" name="end_date" class="w-full border px-3 py-2 rounded" placeholder="Leave empty for all data">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+                <button type="button" onclick="closeReportModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-nhc-blue text-white rounded hover:bg-blue-700">Export</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openReportModal(reportType){
+    const modal = document.getElementById('reportModal');
+    document.getElementById('modalReportType').value = reportType;
+    const form = document.getElementById('reportForm');
+    form.action = `/assets/export-report/${reportType}/`;
+    modal.classList.remove('hidden');
+}
+
+function closeReportModal(){
+    const modal = document.getElementById('reportModal');
+    modal.classList.add('hidden');
+}
+</script>
+
 {% endblock %}

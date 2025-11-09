@@ -55,15 +55,9 @@
             <!-- Condition -->
             <td class="py-3 px-4">
               {% if return %}
-                <form class="update-condition-form" data-return-id="{{ return.id }}">
-                  <select name="condition" class="border border-gray-300 rounded-md px-2 py-1 text-sm">
-                    {% for key, val in return.CONDITION_CHOICES %}
-                      <option value="{{ key }}" {% if key == return.condition_on_return %}selected{% endif %}>{{ val }}</option>
-                    {% endfor %}
-                  </select>
-                </form>
+                <span class="inline-block text-sm font-medium px-3 py-1 rounded-none bg-gray-100 text-gray-800">{{ return.condition_on_return|capfirst }}</span>
               {% else %}
-                <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-500">Not Returned</span>
+                <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-none bg-gray-100 text-gray-500">Not Returned</span>
               {% endif %}
             </td>
 
@@ -85,7 +79,7 @@
                   Mark Returned
                 </button>
               {% else %}
-                <span class="text-gray-500 text-sm">Completed</span>
+                <span class="text-gray-500 text-sm">Returned</span>
               {% endif %}
             </td>
           </tr>
@@ -102,14 +96,12 @@
 <!-- Pagination Controls -->
 {% if page_obj.has_other_pages %}
 <nav class="flex items-center justify-center mt-6 space-x-1" aria-label="Pagination">
-  <!-- Previous Page Link -->
   {% if page_obj.has_previous %}
     <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
   {% else %}
     <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">&laquo; Prev</span>
   {% endif %}
 
-  <!-- Page Numbers -->
   {% for num in page_obj.paginator.page_range %}
     {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
       {% if num == page_obj.number %}
@@ -124,7 +116,6 @@
     {% endif %}
   {% endfor %}
 
-  <!-- Next Page Link -->
   {% if page_obj.has_next %}
     <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
   {% else %}
@@ -132,7 +123,6 @@
   {% endif %}
 </nav>
 {% endif %}
-
 
 <!-- Mark Returned Modal -->
 <div id="returnModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
@@ -144,17 +134,17 @@
 
       <div>
         <label class="block text-sm font-medium mb-1">User</label>
-        <input type="text" id="modalUser" class="w-full border px-3 py-2 rounded" readonly>
+        <input type="text" id="modalUser" class="w-full border px-3 py-2 rounded bg-gray-100" readonly>
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Asset</label>
-        <input type="text" id="modalAsset" class="w-full border px-3 py-2 rounded" readonly>
+        <input type="text" id="modalAsset" class="w-full border px-3 py-2 rounded bg-gray-100" readonly>
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Condition</label>
-        <select name="condition" class="w-full border px-3 py-2 rounded" required>
+        <select name="condition" class="w-full border px-3 py-2 rounded-none" required>
           <option value="good">Good</option>
           <option value="damaged">Damaged</option>
           <option value="lost">Lost</option>
@@ -181,7 +171,7 @@
 
 <!-- Scripts -->
 <script>
-// Open modal
+// Open modal with read-only user/asset fields
 document.querySelectorAll('.mark-return-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     const reqId = this.dataset.reqId;
@@ -211,7 +201,7 @@ document.getElementById("returnForm").addEventListener("submit", function(e){
   const reqId = form.dataset.reqId;
   const formData = new FormData(form);
 
-  fetch(`/accounts/staff/mark-returned/${reqId}/`, {
+  fetch("{% url 'requests:staff_mark_returned' 0 %}".replace("0", reqId), {
     method: 'POST',
     headers: {'X-Requested-With': 'XMLHttpRequest'},
     body: formData
@@ -220,36 +210,13 @@ document.getElementById("returnForm").addEventListener("submit", function(e){
   .then(data => {
     if(data.success){
       const row = document.querySelector(`button[data-req-id='${reqId}']`).closest("tr");
-      row.querySelector("td:nth-child(5)").innerHTML = `
-        <form class="update-condition-form" data-return-id="${data.return_id}">
-          <select name="condition" class="border border-gray-300 rounded-md px-2 py-1 text-sm">
-            <option value="good" ${data.condition=="good"?"selected":""}>Good</option>
-            <option value="damaged" ${data.condition=="damaged"?"selected":""}>Damaged</option>
-            <option value="lost" ${data.condition=="lost"?"selected":""}>Lost</option>
-          </select>
-        </form>
-      `;
+      row.querySelector("td:nth-child(5)").innerHTML = `<span class="inline-block text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-800">${data.condition.charAt(0).toUpperCase() + data.condition.slice(1)}</span>`;
       row.querySelector("td:nth-child(6)").innerText = data.returned_date;
       row.querySelector("td:nth-child(7)").innerText = data.remarks || "-";
-      row.querySelector("td:nth-child(8)").innerHTML = '<span class="text-gray-500 text-sm">Completed</span>';
+      row.querySelector("td:nth-child(8)").innerHTML = '<span class="text-gray-500 text-sm">Returned</span>';
       closeReturnModal();
     }
   });
-});
-
-// Inline condition update
-document.addEventListener("change", function(e){
-  if(e.target.closest(".update-condition-form")){
-    const form = e.target.closest(".update-condition-form");
-    const returnId = form.dataset.returnId;
-    const formData = new FormData();
-    formData.append("condition", e.target.value);
-    fetch(`/accounts/staff/update-return-condition/${returnId}/`, {
-      method: 'POST',
-      headers: {'X-Requested-With': 'XMLHttpRequest'},
-      body: formData
-    });
-  }
 });
 
 // Search Filter

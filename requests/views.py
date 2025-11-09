@@ -17,9 +17,9 @@ from django.core.paginator import Paginator
 
 @login_required
 def staff_manage_requests(request):
-    """Staff can view all user asset requests with pagination."""
+    """Staff view all user requests with pagination."""
     all_requests = AssetRequest.objects.select_related('user', 'asset').order_by('-request_date')
-    paginator = Paginator(all_requests, 5)  # Show 10 per page
+    paginator = Paginator(all_requests, 5)  # 5 requests per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -27,50 +27,42 @@ def staff_manage_requests(request):
         'page_obj': page_obj,
         'all_requests': page_obj.object_list,
     })
-    
-    
+
+
 @login_required
 def update_request_status(request, pk, action):
-    """Approve, reject, or mark an asset as returned."""
+    """Approve or reject a pending request."""
     borrow_request = get_object_or_404(AssetRequest, pk=pk)
+    asset = borrow_request.asset
 
-    if action == 'approve':
-        borrow_request.status = 'approved'
-        borrow_request.approval_date = timezone.now()
-        borrow_request.approved_by = request.user
-        messages.success(request, f"Request approved for {borrow_request.user.username}.")
+    if borrow_request.status != 'pending':
+        messages.error(request, "Only pending requests can be updated.")
+        return redirect('requests:staff_manage_requests')
 
-    elif action == 'reject':
-        borrow_request.status = 'rejected'
-        borrow_request.approval_date = timezone.now()
-        borrow_request.approved_by = request.user
-        messages.warning(request, f"Request rejected for {borrow_request.user.username}.")
+    if request.method == 'POST':
+        remarks = request.POST.get('remarks', '')
 
-    elif action == 'return':
-        if request.method == 'POST':
-            condition = request.POST.get('condition_on_return', 'good')
-            remarks = request.POST.get('remarks', '')
-            borrow_request.status = 'returned'
-
-            # Create return record
-            AssetReturn.objects.create(
-                borrow_request=borrow_request,
-                condition_on_return=condition,
-                received_by=request.user,
-                remarks=remarks
-            )
-
-            messages.info(request, f"Asset returned by {borrow_request.user.username}.")
+        if action == 'approve':
+            borrow_request.status = 'approved'
+            asset.status = 'borrowed'
+            messages.success(request, f"Request approved for {borrow_request.user.username}.")
+        elif action == 'reject':
+            borrow_request.status = 'rejected'
+            asset.status = 'borrowed'
+            messages.warning(request, f"Request rejected for {borrow_request.user.username}.")
         else:
-            messages.error(request, "Invalid return submission.")
-            return redirect('requests:manage_requests')
+            messages.error(request, "Invalid action.")
+            return redirect('requests:staff_manage_requests')
 
-    else:
-        messages.error(request, "Invalid action.")
-        return redirect('requests:manage_requests')
+        borrow_request.remarks = remarks
+        borrow_request.approved_by = request.user
+        borrow_request.approval_date = timezone.now()
 
-    borrow_request.save()
-    return redirect('requests:manage_requests')
+        asset.save()
+        borrow_request.save()
+
+    return redirect('requests:staff_manage_requests')
+
 
 
 # --------------------------
@@ -94,7 +86,7 @@ def update_request_status(request, pk, action):
             messages.warning(request, f"Request rejected for {borrow_request.user.username}.")
         else:
             messages.error(request, "Invalid action.")
-            return redirect('requests:manage_requests')
+            return redirect('requests:staff_manage_requests')
 
         borrow_request.remarks = remarks
         borrow_request.approved_by = request.user
@@ -103,16 +95,16 @@ def update_request_status(request, pk, action):
         asset.save()
         borrow_request.save()
 
-    return redirect('requests:manage_requests')
+    return redirect('requests:staff_manage_requests')
 
 
 @login_required
 def staff_manage_returns(request):
-    # Get all approved or returned requests
+    # Get all approved requests
     approved_requests = AssetRequest.objects.select_related(
         'user', 'asset', 'approved_by'
     ).filter(
-        status__in=['approved', 'returned']
+        status__in=['approved']
     ).prefetch_related('returns').order_by('-request_date')
 
     # Pagination setup (10 per page)
@@ -131,13 +123,19 @@ def staff_manage_returns(request):
 
 @login_required
 def staff_mark_returned(request, req_id):
+    """
+    Mark an asset as returned by the borrower.
+    Creates an AssetReturn record and updates only the Asset table.
+    """
     asset_request = get_object_or_404(AssetRequest, pk=req_id)
+    asset = asset_request.asset
 
     if request.method == "POST":
-        condition = request.POST.get("condition")
+        condition = request.POST.get("condition")  # good, fair, poor
         returned_date = request.POST.get("returned_date")
         remarks = request.POST.get("remarks", "")
 
+        # Create AssetReturn entry
         asset_return = AssetReturn.objects.create(
             borrow_request=asset_request,
             received_by=request.user,
@@ -146,14 +144,25 @@ def staff_mark_returned(request, req_id):
             remarks=remarks
         )
 
-        asset_request.status = 'returned'
-        asset_request.save()
+        # Update asset based on first-time return rules
+        asset.asset_condition = condition
+        if condition == "good":
+            asset.status = "returned"
+        elif condition == "damaged":
+            asset.status = "maintenance"
+        elif condition == "lost":
+            asset.status = "retired"
 
+        asset.save(update_fields=["asset_condition", "status"])
+
+        # AJAX response for instant UI update
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({
                 "success": True,
+                "asset_id": asset.id,
+                "status": asset.status,
+                "condition": asset.asset_condition,
                 "return_id": asset_return.id,
-                "condition": asset_return.condition_on_return,
                 "returned_date": asset_return.returned_date.strftime("%Y-%m-%d"),
                 "remarks": asset_return.remarks
             })
@@ -163,17 +172,38 @@ def staff_mark_returned(request, req_id):
 
 @login_required
 def staff_update_return_condition(request, return_id):
+    """
+    Allows staff to update the condition of an already returned asset.
+    Automatically updates the linked asset’s condition and status.
+    """
     asset_return = get_object_or_404(AssetReturn, pk=return_id)
+    asset = asset_return.borrow_request.asset
+
     if request.method == "POST":
-        new_condition = request.POST.get('condition')
-        if new_condition in dict(AssetReturn.CONDITION_CHOICES).keys():
+        new_condition = request.POST.get("condition")  # Expected: good, fair, poor
+
+        if new_condition in dict(asset.CONDITION_CHOICES):
             asset_return.condition_on_return = new_condition
-            asset_return.save()
+            asset_return.save(update_fields=["condition_on_return"])
+
+            # ✅ Reflect condition change in asset record
+            asset.asset_condition = new_condition
+            if new_condition == "good":
+                asset.status = "available"
+            elif new_condition == "fair":
+                asset.status = "maintenance"
+            else:  # poor
+                asset.status = "retired"
+
+            asset.save(update_fields=["asset_condition", "status"])
+
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse({
                     "success": True,
-                    "condition": new_condition
+                    "new_condition": new_condition,
+                    "new_status": asset.status
                 })
+
     return redirect('requests:staff_manage_returns')
 
 
@@ -220,25 +250,24 @@ def available_assets(request):
 # --------------------------
 @login_required
 def normal_dashboard(request):
-    # Count only available assets
     total_available_assets = Asset.objects.filter(status='available').count()
 
-    # Count of user's requests by status
+    # Counts
     pending_count = AssetRequest.objects.filter(user=request.user, status='pending').count()
     approved_count = AssetRequest.objects.filter(user=request.user, status='approved').count()
     rejected_count = AssetRequest.objects.filter(user=request.user, status='rejected').count()
-    returned_count = AssetRequest.objects.filter(user=request.user, status='returned').count()
-
-    # Total processed requests (approved + rejected + returned)
-    processed_count = approved_count + rejected_count + returned_count
+    processed_count = approved_count + rejected_count 
 
     context = {
         'total_assets': total_available_assets,
         'pending_requests_count': pending_count,
         'processed_requests_count': processed_count,
+        'approved_requests_count': approved_count,
+        'rejected_requests_count': rejected_count,
     }
 
     return render(request, 'accounts/normal_dashboard.html', context)
+
 
 
 # --------------------------

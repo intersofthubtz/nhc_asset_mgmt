@@ -45,15 +45,19 @@
     </div>
 
     <!-- Form Actions: Right-aligned on large screens -->
-    <div class="mt-8 flex flex-wrap justify-end gap-4">
-        <button type="submit" 
-                class="bg-green-600 text-white px-6 py-2 rounded-xl hover:bg-green-700 transition shadow-md hover:shadow-lg">
-            Save
-        </button>
-        <a href="{% url 'assets:staff_manage_assets' %}" 
-           class="bg-gray-200 text-gray-700 px-6 py-2 rounded-xl hover:bg-gray-300 transition shadow-md hover:shadow-lg">
-            Cancel
-        </a>
+    <div class="flex justify-end gap-3 mt-4">
+    <!-- Save Button -->
+    <button type="submit" 
+            class="bg-nhc-blue text-white px-6 py-2 rounded-md hover:bg-blue-700 transition shadow-md hover:shadow-lg">
+        Save
+    </button>
+
+    <!-- Cancel Button -->
+    <a href="{% url 'assets:staff_manage_assets' %}" 
+       class="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition shadow-md hover:shadow-lg">
+        Cancel
+    </a>
+</div>
     </div>
 </form>
 {% endblock %}
