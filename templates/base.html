@@ -41,6 +41,12 @@
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         overflow-x: hidden;
       }
+
+      /* Smooth fade-out animation for messages */
+      .fade-out {
+        opacity: 0;
+        transition: opacity 0.6s ease-out;
+      }
     </style>
   </head>
   <body class="bg-nhc-lightgray text-nhc-black min-h-screen flex flex-col">
@@ -86,17 +92,29 @@
     >
       {% if messages %}
       <ul
+        id="messageContainer"
         class="absolute top-24 left-1/2 transform -translate-x-1/2 w-full max-w-md space-y-3 z-50"
       >
         {% for message in messages %}
         <li
-          class="border-l-4 p-4 rounded-md shadow-sm text-sm sm:text-base {% if message.tags == 'success' %}border-green-500 bg-green-50 text-green-800 {% elif message.tags == 'error' %}border-red-500 bg-red-50 text-red-800 {% elif message.tags == 'warning' %}border-yellow-500 bg-yellow-50 text-yellow-800 {% else %}border-nhc-yellow bg-yellow-50 text-nhc-black{% endif %}"
+          class="border-l-4 p-4 rounded-md shadow-sm text-sm sm:text-base transition-opacity duration-500
+            {% if message.tags == 'success' %}
+              border-green-500 bg-green-50 text-green-800
+            {% elif message.tags == 'error' %}
+              border-red-500 bg-red-50 text-red-800
+            {% elif message.tags == 'warning' %}
+              border-yellow-500 bg-yellow-50 text-yellow-800
+            {% else %}
+              border-nhc-yellow bg-yellow-50 text-nhc-black
+            {% endif %}"
         >
           {{ message }}
         </li>
         {% endfor %}
       </ul>
-      {% endif %} {% block content %}{% endblock %}
+      {% endif %}
+
+      {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
@@ -105,5 +123,20 @@
     >
       &copy; {{ now|date:"Y" }} NHC Asset Management. All Rights Reserved.
     </footer>
+
+    <!-- Auto-hide messages -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const messageContainer = document.getElementById("messageContainer");
+        if (messageContainer) {
+          setTimeout(() => {
+            messageContainer.classList.add("fade-out");
+            setTimeout(() => {
+              messageContainer.remove();
+            }, 600); // remove after fade-out completes
+          }, 3000); // visible for 3 seconds
+        }
+      });
+    </script>
   </body>
 </html>

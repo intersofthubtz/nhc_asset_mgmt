@@ -1,45 +1,48 @@
 {% extends "accounts/staff_dashboard.html" %}
-
 {% block staff_content %}
+
 <h2 class="text-2xl font-bold text-nhc-blue mb-3">Manage Requests</h2>
 
 {% if all_requests %}
 <!-- Search & Filters -->
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-  <!-- Search Bar -->
+<form method="get" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 w-full">
+
+  <!-- Search Input -->
   <input
     type="text"
-    id="searchInput"
+    name="search"
+    value="{{ search_query }}"
     placeholder="Search by user, asset, or status..."
-    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow focus:outline-none"
-  >
+    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow"
+    oninput="this.form.submit()"
+  />
 
   <!-- Status Filter -->
-  <div class="flex items-center gap-2 w-full sm:w-auto">
-    <label for="statusFilter" class="text-gray-700 text-sm font-medium">Show:</label>
+  <div class="flex items-center gap-2">
     <select
-      id="statusFilter"
-      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow focus:outline-none w-full sm:w-auto"
+      name="status"
+      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow"
+      onchange="this.form.submit()"
     >
-      <option value="all">All</option>
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
+      <option value="all" {% if status_filter == "all" %}selected{% endif %}>All</option>
+      <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+      <option value="approved" {% if status_filter == "approved" %}selected{% endif %}>Approved</option>
+      <option value="rejected" {% if status_filter == "rejected" %}selected{% endif %}>Rejected</option>
     </select>
   </div>
-</div>
+</form>
 
 <!-- Requests Table -->
 <div class="overflow-x-auto bg-white shadow-md rounded-none">
   <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base" id="requestsTable">
     <thead class="bg-gray-200 text-nhc-black uppercase font-semibold select-none">
       <tr>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(0)">User</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(1)">Asset</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(2)">Model</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(3)">Requested</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(4)">Return</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(5)">Status</th>
+        <th class="py-3 px-4 text-left">User</th>
+        <th class="py-3 px-4 text-left">Asset</th>
+        <th class="py-3 px-4 text-left">Model</th>
+        <th class="py-3 px-4 text-left">Requested</th>
+        <th class="py-3 px-4 text-left">Return</th>
+        <th class="py-3 px-4 text-left">Status</th>
         <th class="py-3 px-4 text-left">Remarks</th>
         <th class="py-3 px-4 text-center">Action</th>
       </tr>
@@ -61,11 +64,7 @@
           </span>
         </td>
         <td class="py-3 px-4 text-gray-600 text-sm">
-          {% if req.remarks %}
-            {{ req.remarks }}
-          {% else %}
-            <span class="text-gray-400 italic">—</span>
-          {% endif %}
+          {% if req.remarks %}{{ req.remarks }}{% else %}<span class="text-gray-400 italic">—</span>{% endif %}
         </td>
         <td class="py-3 px-4 text-center">
           {% if req.status == 'pending' %}
@@ -89,43 +88,34 @@
   </table>
 </div>
 
-<!-- Pagination -->
+<!-- Pagination like Manage Returns -->
 {% if page_obj.has_other_pages %}
-<div class="flex flex-col sm:flex-row justify-between items-center mt-6 gap-3 text-sm text-gray-700">
-  <div class="text-gray-600">
-    Showing <span class="font-semibold">{{ page_obj.start_index }}</span>–
-    <span class="font-semibold">{{ page_obj.end_index }}</span> of
-    <span class="font-semibold">{{ page_obj.paginator.count }}</span> requests
-  </div>
+<nav class="flex items-center justify-center mt-6 space-x-1">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}"
+     class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
+  {% else %}
+  <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">&laquo; Prev</span>
+  {% endif %}
 
-  <div class="flex flex-wrap items-center justify-center gap-2">
-    {% if page_obj.has_previous %}
-      <a href="?page=1" class="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition">« First</a>
-      <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition">‹ Prev</a>
-    {% else %}
-      <span class="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">« First</span>
-      <span class="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">‹ Prev</span>
-    {% endif %}
-
-    {% for num in page_obj.paginator.page_range %}
-      {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-        {% if num == page_obj.number %}
-          <span class="px-3 py-1 rounded-lg bg-nhc-blue text-white font-semibold">{{ num }}</span>
-        {% else %}
-          <a href="?page={{ num }}" class="px-3 py-1 rounded-lg border border-gray-300 hover:bg-nhc-yellow hover:text-white transition">{{ num }}</a>
-        {% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+      {% if num == page_obj.number %}
+        <span class="px-3 py-1 bg-nhc-blue text-white rounded">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}"
+           class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
       {% endif %}
-    {% endfor %}
-
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition">Next ›</a>
-      <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition">Last »</a>
-    {% else %}
-      <span class="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">Next ›</span>
-      <span class="px-3 py-1 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">Last »</span>
     {% endif %}
-  </div>
-</div>
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&status={{ status_filter }}"
+     class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
+  {% else %}
+  <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">Next &raquo;</span>
+  {% endif %}
+</nav>
 {% endif %}
 
 {% else %}
@@ -134,83 +124,47 @@
 </div>
 {% endif %}
 
-<!-- Action Modal -->
-<div id="actionModal"
-  class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-start justify-center z-50 transition-opacity duration-300">
+<!-- Reuse your existing Action Modal -->
+<div id="actionModal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-start justify-center z-50 transition-opacity duration-300">
   <div class="bg-white rounded-xl shadow-lg w-11/12 max-w-md p-6 mt-10 transform scale-100 transition-all duration-200">
     <h3 class="text-lg font-semibold text-nhc-blue mb-4" id="modalTitle"></h3>
-    <form method="POST" id="actionForm">
-      {% csrf_token %}
+    <form method="POST" id="actionForm">{% csrf_token %}
       <div class="mb-4">
         <label for="remarks" class="block text-gray-700 font-medium">Remarks (optional)</label>
-        <textarea name="remarks" id="remarks" rows="3"
-          class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-nhc-yellow focus:border-nhc-yellow focus:outline-none transition"></textarea>
+        <textarea name="remarks" id="remarks" rows="3" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-nhc-yellow transition"></textarea>
       </div>
       <div class="flex justify-end gap-3">
-        <button type="button" onclick="closeActionModal()"
-          class="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition">Cancel</button>
-        <button type="submit"
-          class="px-4 py-2 rounded-md bg-nhc-blue text-white hover:bg-nhc-black transition"
-          id="modalSubmitBtn">Confirm</button>
+        <button type="button" onclick="closeActionModal()" class="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded-md bg-nhc-blue text-white hover:bg-nhc-black transition" id="modalSubmitBtn">Confirm</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Scripts -->
+<!-- Scripts (Search + Filter + Modal) -->
 <script>
-  // 🔍 Search Filter
-  document.getElementById("searchInput").addEventListener("keyup", function() {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll("#requestsTable tbody tr").forEach(row => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(filter) ? "" : "none";
-    });
+  // Search
+  document.querySelector('input[name="search"]').addEventListener('input', function(){
+    // optional: client-side live search if needed
   });
 
-  // 🔽 Status Filter
-  document.getElementById("statusFilter").addEventListener("change", function() {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll("#requestsTable tbody tr").forEach(row => {
-      const status = row.querySelector("td:nth-child(6)").innerText.toLowerCase();
-      row.style.display = (filter === "all" || status.includes(filter)) ? "" : "none";
-    });
+  // Filter
+  document.querySelector('select[name="status"]').addEventListener('change', function(){
+    this.form.submit();
   });
 
-  // ⬆️ Sorting
-  let sortDirection = true;
-  function sortTable(columnIndex) {
-    const table = document.getElementById("requestsTable");
-    const rows = Array.from(table.tBodies[0].rows);
-    const isNumeric = !isNaN(rows[0].cells[columnIndex].innerText.trim());
-    rows.sort((a, b) => {
-      const aText = a.cells[columnIndex].innerText.trim().toLowerCase();
-      const bText = b.cells[columnIndex].innerText.trim().toLowerCase();
-      return isNumeric
-        ? (sortDirection ? aText - bText : bText - aText)
-        : (sortDirection ? aText.localeCompare(bText) : bText.localeCompare(aText));
-    });
-    rows.forEach(row => table.tBodies[0].appendChild(row));
-    sortDirection = !sortDirection;
-  }
-
-  // 🪟 Modal Handling
-  function openActionModal(requestId, action) {
+  // Modal
+  function openActionModal(requestId, action){
     document.getElementById('actionModal').classList.remove('hidden');
-    document.getElementById('modalTitle').textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Request`;
+    document.getElementById('modalTitle').textContent = `${action.charAt(0).toUpperCase()+action.slice(1)} Request`;
     const form = document.getElementById('actionForm');
     form.action = `/requests/request/${requestId}/${action}/`;
-    document.getElementById('modalSubmitBtn').textContent = action.charAt(0).toUpperCase() + action.slice(1);
+    document.getElementById('modalSubmitBtn').textContent = action.charAt(0).toUpperCase()+action.slice(1);
   }
-
-  function closeActionModal() {
+  function closeActionModal(){
     document.getElementById('actionModal').classList.add('hidden');
-    document.getElementById('remarks').value = '';
+    document.getElementById('remarks').value='';
   }
-
-  window.addEventListener('click', e => {
-    const modal = document.getElementById('actionModal');
-    if (!modal.classList.contains('hidden') && e.target === modal) closeActionModal();
-  });
 </script>
+
 {% endblock %}

@@ -4,130 +4,159 @@
 <h2 class="text-2xl font-bold text-nhc-blue mb-3">Manage Returned Assets</h2>
 <p class="text-gray-700 mb-6">Review assets returned by users and record their condition.</p>
 
-{% if all_returns %}
-<!-- Search and Filters -->
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+<!-- Search + Filters -->
+<form method="get" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 w-full">
+
+  <!-- Search Input -->
   <input
     type="text"
-    id="searchInput"
+    name="search"
+    value="{{ search_query }}"
     placeholder="Search by user, asset, model, or remarks..."
-    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow focus:outline-none"
+    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow"
+    oninput="this.form.submit()"
   />
-  <div class="flex items-center gap-2 w-full sm:w-auto">
-    <label for="conditionFilter" class="text-gray-700 text-sm font-medium">Condition:</label>
+
+  <!-- Condition -->
+  <div class="flex items-center gap-2">
     <select
-      id="conditionFilter"
-      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow focus:outline-none w-full sm:w-auto"
+      name="condition"
+      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow"
+      onchange="this.form.submit()"
     >
-      <option value="all">All</option>
-      <option value="good">Good</option>
-      <option value="damaged">Damaged</option>
-      <option value="lost">Lost</option>
-      <option value="not returned">Not Returned</option>
+        <option value="all" {% if condition_filter == "all" %}selected{% endif %}>All</option>
+        <option value="good" {% if condition_filter == "good" %}selected{% endif %}>Good</option>
+        <option value="damaged" {% if condition_filter == "damaged" %}selected{% endif %}>Damaged</option>
+        <option value="lost" {% if condition_filter == "lost" %}selected{% endif %}>Lost</option>
+        <option value="not returned" {% if condition_filter == "not returned" %}selected{% endif %}>Not Returned</option>
     </select>
   </div>
-</div>
+
+</form>
 
 <!-- Returned Assets Table -->
 <div class="overflow-x-auto bg-white shadow-md rounded-none">
-  <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base" id="returnsTable">
-    <thead class="bg-gray-200 text-nhc-black uppercase font-semibold select-none">
+  <table class="min-w-full divide-y divide-gray-200 text-sm" id="returnsTable">
+    <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
       <tr>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(0)">User</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(1)">Asset</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(2)">Model</th>
-        <th class="py-3 px-4 text-left cursor-pointer" onclick="sortTable(3)">Expected Return</th>
+        <th class="py-3 px-4 text-left">User</th>
+        <th class="py-3 px-4 text-left">Asset</th>
+        <th class="py-3 px-4 text-left">Model</th>
+        <th class="py-3 px-4 text-left">Expected Return</th>
         <th class="py-3 px-4 text-left">Condition</th>
         <th class="py-3 px-4 text-left">Returned Date</th>
         <th class="py-3 px-4 text-left">Remarks</th>
         <th class="py-3 px-4 text-left">Action</th>
       </tr>
     </thead>
+
     <tbody class="divide-y divide-gray-100">
       {% for req in page_obj %}
-        {% with return=req.returns.first %}
-          <tr class="hover:bg-gray-50 transition">
-            <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
-            <td class="py-3 px-4">{{ req.asset.asset_name }}</td>
-            <td class="py-3 px-4">{{ req.asset.model|default:"N/A" }}</td>
-            <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
+      {% with return=req.returns.first %}
+      <tr class="hover:bg-gray-50 transition">
+        <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
+        <td class="py-3 px-4">{{ req.asset.asset_name }}</td>
+        <td class="py-3 px-4">{{ req.asset.model|default:"N/A" }}</td>
+        <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
 
-            <!-- Condition -->
-            <td class="py-3 px-4">
-              {% if return %}
-                <span class="inline-block text-sm font-medium px-3 py-1 rounded-none bg-gray-100 text-gray-800">{{ return.condition_on_return|capfirst }}</span>
-              {% else %}
-                <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-none bg-gray-100 text-gray-500">Not Returned</span>
-              {% endif %}
-            </td>
+        <!-- Condition -->
+        <td class="py-3 px-4">
+          {% if return %}
+            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded">
+              {{ return.condition_on_return|capfirst }}
+            </span>
+          {% else %}
+            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-500 rounded">Not Returned</span>
+          {% endif %}
+        </td>
 
-            <!-- Returned Date -->
-            <td class="py-3 px-4">{% if return %}{{ return.returned_date|date:"M d, Y" }}{% else %}-{% endif %}</td>
+        <!-- Returned Date -->
+        <td class="py-3 px-4">
+          {% if return %}
+            {{ return.returned_date|date:"M d, Y" }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
 
-            <!-- Remarks -->
-            <td class="py-3 px-4">{% if return %}{{ return.remarks|default:"-" }}{% else %}-{% endif %}</td>
+        <!-- Remarks -->
+        <td class="py-3 px-4">
+          {% if return %}
+            {{ return.remarks|default:"-" }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
 
-            <!-- Action -->
-            <td class="py-3 px-4">
-              {% if not return %}
-                <button
-                  type="button"
-                  class="px-3 py-1 bg-nhc-blue text-white rounded-md text-sm mark-return-btn"
-                  data-req-id="{{ req.id }}"
-                  data-user="{{ req.user.username }}"
-                  data-asset="{{ req.asset.asset_name }}">
-                  Mark Returned
-                </button>
-              {% else %}
-                <span class="text-gray-500 text-sm">Returned</span>
-              {% endif %}
-            </td>
-          </tr>
-        {% endwith %}
+        <!-- Action Button -->
+        <td class="py-3 px-4">
+          {% if not return %}
+            <button
+              type="button"
+              class="px-3 py-1 bg-nhc-blue text-white rounded-md text-sm mark-return-btn"
+              data-req-id="{{ req.id }}"
+              data-user="{{ req.user.username }}"
+              data-asset="{{ req.asset.asset_name }}"
+            >
+              Mark Returned
+            </button>
+          {% else %}
+            <span class="text-gray-500 text-sm">Returned</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endwith %}
       {% empty %}
-        <tr>
-          <td colspan="8" class="text-center text-gray-500 py-4">No returned assets available.</td>
-        </tr>
+      <tr>
+        <td colspan="8" class="text-center text-gray-500 py-4">No results found.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
-<!-- Pagination Controls -->
+<!-- PAGINATION -->
 {% if page_obj.has_other_pages %}
-<nav class="flex items-center justify-center mt-6 space-x-1" aria-label="Pagination">
+<nav class="flex items-center justify-center mt-6 space-x-1">
+
   {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
+  <a
+    href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&condition={{ condition_filter }}"
+    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+  >&laquo; Prev</a>
   {% else %}
-    <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">&laquo; Prev</span>
+  <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">&laquo; Prev</span>
   {% endif %}
 
   {% for num in page_obj.paginator.page_range %}
-    {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-      {% if num == page_obj.number %}
-        <span class="px-3 py-1 bg-nhc-blue text-white rounded">{{ num }}</span>
-      {% else %}
-        <a href="?page={{ num }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
-      {% endif %}
-    {% elif num == 1 or num == page_obj.paginator.num_pages %}
-      <a href="?page={{ num }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
-    {% elif num == page_obj.number|add:-3 or num == page_obj.number|add:3 %}
-      <span class="px-2 py-1 text-gray-500">…</span>
+    {% if num == page_obj.number %}
+      <span class="px-3 py-1 bg-nhc-blue text-white rounded">{{ num }}</span>
+    {% else %}
+      <a
+        href="?page={{ num }}&search={{ search_query }}&condition={{ condition_filter }}"
+        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+      >{{ num }}</a>
     {% endif %}
   {% endfor %}
 
   {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
+  <a
+    href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&condition={{ condition_filter }}"
+    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+  >Next &raquo;</a>
   {% else %}
-    <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">Next &raquo;</span>
+  <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">Next &raquo;</span>
   {% endif %}
+
 </nav>
 {% endif %}
 
-<!-- Mark Returned Modal -->
+
+<!-- (⚠ Keep your modal + JS for marking return - unchanged) -->
 <div id="returnModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 mx-4 transform transition-all scale-100">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 mx-4">
     <h2 class="text-xl font-bold mb-4 text-center text-nhc-blue">Mark Asset as Returned</h2>
+
     <form id="returnForm" method="POST" class="space-y-4">
       {% csrf_token %}
       <input type="hidden" name="req_id" id="modalReqId">
@@ -144,7 +173,7 @@
 
       <div>
         <label class="block text-sm font-medium mb-1">Condition</label>
-        <select name="condition" class="w-full border px-3 py-2 rounded-none" required>
+        <select name="condition" class="w-full border px-3 py-2 rounded" required>
           <option value="good">Good</option>
           <option value="damaged">Damaged</option>
           <option value="lost">Lost</option>
@@ -169,11 +198,12 @@
   </div>
 </div>
 
-<!-- Scripts -->
+
+<!-- ===================== JS ========================= -->
 <script>
-// Open modal with read-only user/asset fields
+// Open modal
 document.querySelectorAll('.mark-return-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
+  btn.addEventListener('click', function(){
     const reqId = this.dataset.reqId;
     const user = this.dataset.user;
     const asset = this.dataset.asset;
@@ -181,24 +211,41 @@ document.querySelectorAll('.mark-return-btn').forEach(btn => {
     document.getElementById('modalReqId').value = reqId;
     document.getElementById('modalUser').value = user;
     document.getElementById('modalAsset').value = asset;
-    document.getElementById('returnForm').dataset.reqId = reqId;
+
     document.getElementById('returnModal').classList.remove('hidden');
     document.getElementById('returnModal').classList.add('flex');
   });
 });
 
 // Close modal
-function closeReturnModal() {
+function closeReturnModal(){
   const modal = document.getElementById('returnModal');
   modal.classList.add('hidden');
   modal.classList.remove('flex');
 }
 
-// AJAX submit for Mark Returned
+// Feedback toast helper
+function showFeedback(message, type="success"){
+  let existing = document.getElementById("feedbackMessage");
+  if(existing) existing.remove();
+
+  const div = document.createElement("div");
+  div.id = "feedbackMessage";
+  div.innerText = message;
+  div.className = `
+    fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-white
+    ${type === "success" ? "bg-green-500" : "bg-red-500"}
+  `;
+  document.body.appendChild(div);
+
+  setTimeout(() => div.remove(), 3000);
+}
+
+// AJAX submit
 document.getElementById("returnForm").addEventListener("submit", function(e){
   e.preventDefault();
   const form = e.target;
-  const reqId = form.dataset.reqId;
+  const reqId = document.getElementById('modalReqId').value;
   const formData = new FormData(form);
 
   fetch("{% url 'requests:staff_mark_returned' 0 %}".replace("0", reqId), {
@@ -210,52 +257,26 @@ document.getElementById("returnForm").addEventListener("submit", function(e){
   .then(data => {
     if(data.success){
       const row = document.querySelector(`button[data-req-id='${reqId}']`).closest("tr");
-      row.querySelector("td:nth-child(5)").innerHTML = `<span class="inline-block text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-800">${data.condition.charAt(0).toUpperCase() + data.condition.slice(1)}</span>`;
+
+      // Update table row
+      row.querySelector("td:nth-child(5)").innerHTML =
+        `<span class='inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded'>${data.condition}</span>`;
       row.querySelector("td:nth-child(6)").innerText = data.returned_date;
       row.querySelector("td:nth-child(7)").innerText = data.remarks || "-";
       row.querySelector("td:nth-child(8)").innerHTML = '<span class="text-gray-500 text-sm">Returned</span>';
+
+      // Show feedback toast
+      showFeedback("Asset marked as returned successfully!", "success");
+
       closeReturnModal();
+    } else if(data.error){
+      showFeedback(data.error, "error");
     }
+  })
+  .catch(err => {
+    showFeedback("An unexpected error occurred.", "error");
   });
 });
-
-// Search Filter
-document.getElementById("searchInput").addEventListener("keyup", function(){
-  const filter = this.value.toLowerCase();
-  document.querySelectorAll("#returnsTable tbody tr").forEach(row=>{
-    row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
-  });
-});
-
-// Condition Filter
-document.getElementById("conditionFilter").addEventListener("change", function(){
-  const filter = this.value.toLowerCase();
-  document.querySelectorAll("#returnsTable tbody tr").forEach(row=>{
-    const conditionText = row.querySelector("td:nth-child(5)").textContent.toLowerCase();
-    row.style.display = (filter==='all'||conditionText.includes(filter)) ? "" : "none";
-  });
-});
-
-// Sorting
-let sortDirection = true;
-function sortTable(idx){
-  const table = document.getElementById("returnsTable");
-  const rows = Array.from(table.tBodies[0].rows);
-  const isNumeric = !isNaN(rows[0].cells[idx].innerText.trim());
-  rows.sort((a,b)=>{
-    const aText = a.cells[idx].innerText.trim().toLowerCase();
-    const bText = b.cells[idx].innerText.trim().toLowerCase();
-    return isNumeric ? (sortDirection?aText-bText:bText-aText) : (sortDirection?aText.localeCompare(bText):bText.localeCompare(aText));
-  });
-  rows.forEach(row=>table.tBodies[0].appendChild(row));
-  sortDirection = !sortDirection;
-}
 </script>
-
-{% else %}
-<div class="bg-white p-6 rounded-xl shadow-md text-center">
-  <p class="text-gray-600">No returned assets available at the moment.</p>
-</div>
-{% endif %}
 
 {% endblock %}

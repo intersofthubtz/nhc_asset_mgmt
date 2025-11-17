@@ -1,33 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-lg mx-auto mt-8 bg-white p-6 rounded-xl shadow-md">
-  <h2 class="text-2xl font-bold text-nhc-blue mb-4">Request Asset</h2>
+<div class="max-w-2xl mx-auto mt-12 bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
 
-  <p class="text-gray-600 mb-4">
+  <!-- Header -->
+  <h2 class="text-3xl font-bold text-nhc-blue mb-2 text-start">Request Asset</h2>
+  <p class="text-gray-600 text-start mb-6">
     <strong>Asset:</strong> {{ asset.get_asset_name_display }} - {{ asset.model|default:"N/A" }}
   </p>
 
-  <form method="post" class="space-y-4">
+  <!-- Form -->
+  <form method="post" class="space-y-6">
     {% csrf_token %}
 
     <div>
-      <label for="request_date" class="block text-gray-700 font-medium">Request Date</label>
+      <label for="request_date" class="block text-gray-700 font-medium mb-1">Request Date</label>
       <input type="date" name="request_date" id="request_date" required
-             class="w-full border-gray-300 rounded-md p-2 focus:border-nhc-yellow focus:ring-nhc-yellow">
+             class="w-full border-gray-300 rounded-md p-3 focus:border-nhc-yellow focus:ring-2 focus:ring-nhc-yellow transition">
     </div>
 
     <div>
-      <label for="return_date" class="block text-gray-700 font-medium">Expected Return Date</label>
+      <label for="return_date" class="block text-gray-700 font-medium mb-1">Expected Return Date</label>
       <input type="date" name="return_date" id="return_date" required
-             class="w-full border-gray-300 rounded-md p-2 focus:border-nhc-yellow focus:ring-nhc-yellow">
+             class="w-full border-gray-300 rounded-md p-3 focus:border-nhc-yellow focus:ring-2 focus:ring-nhc-yellow transition">
     </div>
 
-    <!-- Removed remarks field for normal users -->
-
-    <button type="submit"
-            class="w-full bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
-      Submit Request
-    </button>
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <a href="javascript:history.back()"
+         class="w-full sm:w-auto text-center bg-gray-200 text-gray-800 font-medium py-2 px-6 rounded-md hover:bg-gray-300 transition">
+        Cancel
+      </a>
+      <button type="submit"
+              class="w-full sm:w-auto bg-nhc-yellow text-nhc-black font-semibold py-2 px-6 rounded-md hover:bg-yellow-500 transition">
+        Submit Request
+      </button>
+    </div>
   </form>
 </div>
 {% endblock %}

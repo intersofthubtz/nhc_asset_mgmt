@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% load static %} {% block content %}
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
 <div
   class="flex flex-col md:flex-row w-full max-w-7xl mx-auto mt-6 gap-6 px-4 relative"
 >
@@ -9,6 +11,8 @@
   >
     <h2 class="text-xl font-bold text-nhc-blue mb-6">STAFF Menu</h2>
     <nav class="flex flex-col space-y-3">
+
+      <!-- Dashboard -->
       <a
         href="{% url 'staff_dashboard' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/dashboard/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
@@ -21,15 +25,12 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3 12l9-9 9 9M4 10v10h16V10"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M4 10v10h16V10" />
         </svg>
         Dashboard
       </a>
 
+      <!-- Manage Assets -->
       <a
         href="{% url 'assets:staff_manage_assets' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-assets/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
@@ -42,15 +43,12 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M9 12h6m-6 4h6M5 6h14M5 6v14h14V6H5z"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
         </svg>
         Manage Assets
       </a>
 
+      <!-- Manage Requests -->
       <a
         href="{% url 'requests:staff_manage_requests' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-requests/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
@@ -63,15 +61,12 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
         Manage Requests
       </a>
 
+      <!-- Returned Assets -->
       <a
         href="{% url 'requests:staff_manage_returns' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/manage-returns/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
@@ -84,15 +79,12 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3 7h18M3 12h18M3 17h18"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h7V3l10 9-10 9v-7H3v-4z" />
         </svg>
         Returned Assets
       </a>
 
+      <!-- Report -->
       <a
         href="{% url 'staff_report' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/report/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
@@ -105,12 +97,7 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18" />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M7 14h3v7H7zM12 10h3v11h-3zM17 6h3v15h-3z"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6a2 2 0 012-2h8M9 17v4m0-4H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3z" />
         </svg>
         Report
       </a>
@@ -127,28 +114,27 @@
     <p class="text-gray-700 mb-6">Overview of assets, requests, and returns.</p>
 
     <!-- Quick Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-blue">
-    <p class="text-sm font-medium text-gray-500">Total Assets</p>
-    <h3 class="text-2xl font-bold text-nhc-blue">{{ total_assets }}</h3>
-  </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-gradient-to-b from-blue-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-blue hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Total Assets</p>
+        <h3 class="text-2xl font-bold text-nhc-blue mt-1">{{ total_assets }}</h3>
+      </div>
 
-  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-yellow">
-    <p class="text-sm font-medium text-gray-500">Pending Requests</p>
-    <h3 class="text-2xl font-bold text-nhc-yellow">{{ pending_requests }}</h3>
-  </div>
+      <div class="bg-gradient-to-b from-yellow-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-yellow hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Pending Requests</p>
+        <h3 class="text-2xl font-bold text-nhc-yellow mt-1">{{ pending_requests }}</h3>
+      </div>
 
-  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-green">
-    <p class="text-sm font-medium text-gray-500">Approved Assets</p>
-    <h3 class="text-2xl font-bold text-nhc-green">{{ approved_assets }}</h3>
-  </div>
+      <div class="bg-gradient-to-b from-green-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-green hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Approved Assets</p>
+        <h3 class="text-2xl font-bold text-nhc-green mt-1">{{ approved_assets }}</h3>
+      </div>
 
-  <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-nhc-purple">
-    <p class="text-sm font-medium text-gray-500">Returned Assets</p>
-    <h3 class="text-2xl font-bold text-nhc-purple">{{ returned_assets }}</h3>
-  </div>
-</div>
-
+      <div class="bg-gradient-to-b from-purple-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-purple hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Returned Assets</p>
+        <h3 class="text-2xl font-bold text-nhc-purple mt-1">{{ returned_assets }}</h3>
+      </div>
+    </div>
 
     <!-- Recent Requests Table -->
     <div class="bg-white shadow-md rounded-xl p-4">
