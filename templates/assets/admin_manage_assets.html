@@ -1,0 +1,163 @@
+{% extends "accounts/admin_dashboard.html" %}
+{% block admin_content %}
+<div class="w-full max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-nhc-blue tracking-tight">Manage Assets</h2>
+      <p class="text-gray-600 mt-1 text-sm sm:text-base">
+        {{ page_obj.paginator.count }} assets added in the store
+      </p>
+    </div>
+    <a href="{% url 'assets:add_asset' %}"
+       class="flex items-center gap-2 bg-nhc-blue text-white font-semibold px-4 py-2 rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">
+      <i class="fas fa-plus"></i> Add New Asset
+    </a>
+  </div>
+
+  <!-- Search & Filters -->
+  <form id="searchForm" method="get"
+        class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5 bg-white p-4 rounded-lg shadow-md border border-gray-100">
+    
+    <!-- Search Input -->
+    <div class="w-full sm:w-1/2">
+      <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, model, serial, barcode..."
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-nhc-blue focus:border-transparent transition shadow-sm">
+    </div>
+
+    <!-- Filters -->
+    <div class="flex gap-3 w-full sm:w-auto flex-wrap">
+      <select name="status"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-nhc-blue focus:border-transparent transition shadow-sm w-full sm:w-44">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+        <option value="Available" {% if status_filter == 'Available' %}selected{% endif %}>Available</option>
+        <option value="Borrowed" {% if status_filter == 'Borrowed' %}selected{% endif %}>Borrowed</option>
+        <option value="Issued" {% if status_filter == 'Issued' %}selected{% endif %}>Issued</option>
+        <option value="Maintenance" {% if status_filter == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+        <option value="Returned" {% if status_filter == 'Returned' %}selected{% endif %}>Returned</option>
+      </select>
+
+      <select name="condition"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-nhc-blue focus:border-transparent transition shadow-sm w-full sm:w-44">
+        <option value="all" {% if condition_filter == 'all' %}selected{% endif %}>All Conditions</option>
+        <option value="Good" {% if condition_filter == 'Good' %}selected{% endif %}>Good</option>
+        <option value="Damaged" {% if condition_filter == 'Damaged' %}selected{% endif %}>Damaged</option>
+        <option value="Lost" {% if condition_filter == 'Lost' %}selected{% endif %}>Lost</option>
+      </select>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="overflow-x-auto bg-white shadow-md rounded-none">
+    <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+      <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
+        <tr>
+          <th class="py-3 px-4 text-left  uppercase tracking-wider">Asset Name</th>
+          <th class="py-3 px-4 text-left uppercase tracking-wider">Model</th>
+          <th class="py-3 px-4 text-left  uppercase tracking-wider">Serial</th>
+          <th class="py-3 px-4 text-left  uppercase tracking-wider">Barcode</th>
+          <th class="py-3 px-4 text-left uppercase tracking-wider">Status</th>
+          <th class="py-3 px-4 text-left  uppercase tracking-wider">Condition</th>
+          <th class="py-3 px-4 text-center  uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for asset in page_obj %}
+        <tr class="hover:bg-gray-50 transition duration-150">
+          <td class="py-3 px-4 font-semibold text-nhc-blue">{{ asset.asset_name }}</td>
+          <td class="py-3 px-4">{{ asset.model|default:"—" }}</td>
+          <td class="py-3 px-4">{{ asset.serial_number|default:"—" }}</td>
+          <td class="py-3 px-4">{{ asset.barcode|default:"—" }}</td>
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
+              {% if asset.status == 'Available' %}bg-green-100 text-green-700
+              {% elif asset.status == 'Issued' %}bg-yellow-100 text-yellow-700
+              {% elif asset.status == 'Returned' %}bg-blue-100 text-blue-700{% endif %}">
+              {{ asset.status }}
+            </span>
+          </td>
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
+              {% if asset.asset_condition == 'Good' %}bg-green-100 text-green-700
+              {% elif asset.asset_condition == 'Damaged' %}bg-red-100 text-red-700
+              {% elif asset.asset_condition == 'Lost' %}bg-gray-200 text-gray-700{% endif %}">
+              {{ asset.asset_condition }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center flex justify-center gap-3">
+            <a href="{% url 'assets:asset_detail' asset.pk %}" class="text-gray-600 hover:text-gray-800" title="View">
+              <i class="fas fa-eye"></i>
+            </a>
+            <a href="{% url 'assets:edit_asset' asset.pk %}" class="text-blue-600 hover:text-blue-800" title="Edit">
+              <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'assets:delete_asset' asset.pk %}" class="text-red-600 hover:text-red-800" title="Delete">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="py-8 text-center text-gray-500">No assets found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <nav class="flex justify-center items-center mt-6 gap-2 text-sm sm:text-base">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}&condition={{ condition_filter }}"
+         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">Previous</a>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">Previous</span>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+        {% if num == page_obj.number %}
+          <span class="px-4 py-2 bg-nhc-yellow text-nhc-black rounded-md font-semibold shadow">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}&condition={{ condition_filter }}"
+             class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">{{ num }}</a>
+        {% endif %}
+      {% elif num == 1 or num == page_obj.paginator.num_pages %}
+        <a href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}&condition={{ condition_filter }}"
+           class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">{{ num }}</a>
+      {% elif num == page_obj.number|add:-3 or num == page_obj.number|add:3 %}
+        <span class="px-2 py-1 text-gray-500">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&status={{ status_filter }}&condition={{ condition_filter }}"
+         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">Next</a>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">Next</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+</div>
+
+<!-- JS: Auto-submit Search/Filters -->
+<script>
+  const searchInput = document.querySelector('input[name="search"]');
+  const statusSelect = document.querySelector('select[name="status"]');
+  const conditionSelect = document.querySelector('select[name="condition"]');
+  const searchForm = document.getElementById('searchForm');
+  let typingTimer;
+  const delay = 600;
+
+  searchInput.addEventListener('keyup', () => {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => searchForm.submit(), delay);
+  });
+  searchInput.addEventListener('keydown', () => clearTimeout(typingTimer));
+  statusSelect.addEventListener('change', () => searchForm.submit());
+  conditionSelect.addEventListener('change', () => searchForm.submit());
+</script>
+
+{% endblock %}

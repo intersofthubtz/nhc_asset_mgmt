@@ -14,6 +14,95 @@ from django.core.paginator import Paginator
 from django.db.models import Case, When, Value, IntegerField
 from django.core.exceptions import ValidationError
 
+
+# --------------------------
+# ADMIN: Manage Requests
+# --------------------------
+@login_required
+def admin_manage_requests(request):
+    """Admin view all requests with search and filter, paginated."""
+    search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', 'all')
+
+    # Base queryset
+    requests_qs = AssetRequest.objects.select_related('user', 'asset')
+
+    # Apply search across username, asset name, and status
+    if search_query:
+        requests_qs = requests_qs.filter(
+            Q(user__username__icontains=search_query) |
+            Q(asset__asset_name__icontains=search_query) |
+            Q(status__icontains=search_query)
+        )
+
+    # Apply status filter (skip "all")
+    if status_filter != 'all':
+        requests_qs = requests_qs.filter(status=status_filter)
+
+    # Order by request_date descending
+    requests_qs = requests_qs.order_by('-request_date', '-id')  # tie-breaker by ID
+
+    # Pagination
+    paginator = Paginator(requests_qs, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'all_requests': page_obj.object_list,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    }
+
+    return render(request, 'requests/admin_manage_requests.html', context)
+
+
+@login_required
+def admin_manage_returns(request):
+    search_query = request.GET.get("search", "").strip()
+    condition_filter = request.GET.get("condition", "all")
+
+    # Base queryset
+    approved_requests = (
+        AssetRequest.objects.select_related("user", "asset", "approved_by")
+        .filter(status="approved")
+        .prefetch_related("returns")
+        .order_by("-request_date")
+    )
+
+    # --- SEARCH ---
+    if search_query:
+        approved_requests = approved_requests.filter(
+            Q(user__username__icontains=search_query)
+            | Q(asset__asset_name__icontains=search_query)
+            | Q(asset__model__icontains=search_query)
+            | Q(returns__remarks__icontains=search_query)
+        ).distinct()
+
+    # --- CONDITION FILTER ---
+    if condition_filter != "all":
+        if condition_filter == "not returned":
+            approved_requests = approved_requests.filter(returns__isnull=True)
+        else:
+            approved_requests = approved_requests.filter(
+                returns__condition_on_return__iexact=condition_filter
+            )
+
+    # Pagination
+    paginator = Paginator(approved_requests, 5)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "page_obj": page_obj,
+        "today": timezone.localdate(),
+        "search_query": search_query,
+        "condition_filter": condition_filter,
+    }
+
+    return render(request, "requests/admin_manage_returns.html", context)
+
+
 # --------------------------
 # STAFF: Manage Requests
 # --------------------------
@@ -305,7 +394,7 @@ def available_assets(request):
     if query:
         asset_list = asset_list.filter(
             Q(asset_name__icontains=query) |
-            Q(model__icontains=query)
+            Q(description__icontains=query)
         )
 
     if condition_filter in ["good", "fair", "poor"]:

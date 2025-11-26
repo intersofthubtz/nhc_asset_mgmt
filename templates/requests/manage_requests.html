@@ -12,8 +12,7 @@
     </div>
   </div>
 
-  {% if all_requests %}
-  <!-- Search & Filter -->
+  <!-- Search & Filter (Always visible) -->
   <form method="get" class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5 bg-white p-4 rounded-lg shadow-md border border-gray-100">
     <input
       type="text"
@@ -36,6 +35,7 @@
   <!-- Requests Table -->
   <div class="overflow-x-auto bg-white shadow-md rounded-lg border border-gray-100">
     <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+      <!-- Table Head: Always visible -->
       <thead class="bg-gray-200 text-nhc-black uppercase font-semibold select-none">
         <tr>
           <th class="py-3 px-4 text-left">ID</th>
@@ -50,61 +50,70 @@
           <th class="py-3 px-4 text-center">Action</th>
         </tr>
       </thead>
+
+      <!-- Table Body -->
       <tbody class="divide-y divide-gray-100">
-        {% for req in all_requests %}
-        <tr class="hover:bg-gray-50 transition duration-150">
-          <td class="py-3 px-4">{{ req.id }}</td>
-          <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
-          <td class="py-3 px-4">{{ req.asset.asset_name }}</td>
-          <td class="py-3 px-4">{{ req.request_date|date:"M d, Y" }}</td>
-          <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
-          <td class="py-3 px-4">
-            <span class="inline-block px-3 py-1 text-xs sm:text-sm font-semibold rounded-full
-              {% if req.status == 'approved' %}bg-green-100 text-green-700
-              {% elif req.status == 'rejected' %}bg-red-100 text-red-700
-              {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-              {{ req.get_status_display }}
-            </span>
-          </td>
-          <td class="py-3 px-4">
-            {% if req.approval_date %}
-              {{ req.approval_date|date:"M d, Y H:i" }}
-            {% else %}
-              <span class="text-gray-400 italic">—</span>
-            {% endif %}
-          </td>
-          <td class="py-3 px-4">
-            {% if req.approved_by %}
-              {{ req.approved_by.username }}
-            {% else %}
-              <span class="text-gray-400 italic">—</span>
-            {% endif %}
-          </td>
-          <td class="py-3 px-4 text-gray-600 text-sm">
-            {% if req.remarks %}
-              {{ req.remarks }}
-            {% else %}
-              <span class="text-gray-400 italic">—</span>
-            {% endif %}
-          </td>
-          <td class="py-3 px-4 text-center">
-            {% if req.status == 'pending' %}
-            <div class="flex justify-center gap-2">
-              <button onclick="openActionModal({{ req.pk }}, 'approve')"
-                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-1 px-3 rounded-md transition text-xs sm:text-sm">
-                Approve
-              </button>
-              <button onclick="openActionModal({{ req.pk }}, 'reject')"
-                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md transition text-xs sm:text-sm">
-                Reject
-              </button>
-            </div>
-            {% else %}
-              <span class="text-gray-400 text-sm italic">No action</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
+        {% if all_requests %}
+          {% for req in all_requests %}
+          <tr class="hover:bg-gray-50 transition duration-150">
+            <td class="py-3 px-4">{{ req.id }}</td>
+            <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
+            <td class="py-3 px-4">{{ req.asset.asset_name }}</td>
+            <td class="py-3 px-4">{{ req.request_date|date:"M d, Y" }}</td>
+            <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
+            <td class="py-3 px-4">
+              <span class="inline-block px-3 py-1 text-xs sm:text-sm font-semibold rounded-full
+                {% if req.status == 'approved' %}bg-green-100 text-green-700
+                {% elif req.status == 'rejected' %}bg-red-100 text-red-700
+                {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                {{ req.get_status_display }}
+              </span>
+            </td>
+            <td class="py-3 px-4">
+              {% if req.approval_date %}
+                {{ req.approval_date|date:"M d, Y H:i" }}
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4">
+              {% if req.approved_by %}
+                {{ req.approved_by.username }}
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4 text-gray-600 text-sm">
+              {% if req.remarks %}
+                {{ req.remarks }}
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4 text-center">
+              {% if req.status == 'pending' %}
+              <div class="flex justify-center gap-2">
+                <button onclick="openActionModal({{ req.pk }}, 'approve')"
+                  class="bg-green-600 hover:bg-green-700 text-white font-semibold py-1 px-3 rounded-md transition text-xs sm:text-sm">
+                  Approve
+                </button>
+                <button onclick="openActionModal({{ req.pk }}, 'reject')"
+                  class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-md transition text-xs sm:text-sm">
+                  Reject
+                </button>
+              </div>
+              {% else %}
+                <span class="text-gray-400 text-sm italic">No action</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <!-- Always keep table head visible, show "not found" row -->
+          <tr>
+            <td colspan="10" class="text-center text-gray-500 py-4">No asset requests available at the moment.</td>
+          </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
@@ -167,34 +176,29 @@
     </div>
   </div>
 
-  <script>
-    function openActionModal(requestId, action) {
-      const modal = document.getElementById('actionModal');
-      const title = document.getElementById('modalTitle');
-      const form = document.getElementById('actionForm');
-      const submitBtn = document.getElementById('modalSubmitBtn');
-
-      modal.classList.remove('hidden');
-      title.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Request`;
-      form.action = `/accounts/staff/staff/request/${requestId}/${action}/`;
-      submitBtn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
-    }
-
-    function closeActionModal() {
-      document.getElementById('actionModal').classList.add('hidden');
-      document.getElementById('remarks').value = '';
-    }
-
-    window.addEventListener('click', e => {
-      const modal = document.getElementById('actionModal');
-      if (!modal.classList.contains('hidden') && e.target === modal) closeActionModal();
-    });
-  </script>
-
-  {% else %}
-  <div class="bg-white p-6 rounded-xl shadow-md text-center">
-    <p class="text-gray-600">No asset requests available at the moment.</p>
-  </div>
-  {% endif %}
 </div>
+
+<script>
+function openActionModal(requestId, action) {
+  const modal = document.getElementById('actionModal');
+  const title = document.getElementById('modalTitle');
+  const form = document.getElementById('actionForm');
+  const submitBtn = document.getElementById('modalSubmitBtn');
+
+  modal.classList.remove('hidden');
+  title.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Request`;
+  form.action = `/accounts/staff/staff/request/${requestId}/${action}/`;
+  submitBtn.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+}
+
+function closeActionModal() {
+  document.getElementById('actionModal').classList.add('hidden');
+  document.getElementById('remarks').value = '';
+}
+
+window.addEventListener('click', e => {
+  const modal = document.getElementById('actionModal');
+  if (!modal.classList.contains('hidden') && e.target === modal) closeActionModal();
+});
+</script>
 {% endblock %}

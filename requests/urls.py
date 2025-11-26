@@ -17,4 +17,8 @@ urlpatterns = [
     path('manage-returns/', views.staff_manage_returns, name='staff_manage_returns'),
     path('mark-returned/<int:req_id>/', views.staff_mark_returned, name='staff_mark_returned'),
     path('update-return-condition/<int:return_id>/', views.staff_update_return_condition, name='staff_update_return_condition'),
+    
+    # Admin routes
+    path('admin/manage-requests/', views.admin_manage_requests, name='admin_manage_requests'),
+    path('admin/manage-returns/', views.admin_manage_returns, name='admin_manage_returns'),
 ]

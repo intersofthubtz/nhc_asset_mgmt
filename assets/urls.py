@@ -4,6 +4,10 @@ from . import views
 app_name = 'assets'
 
 urlpatterns = [
+    #admin
+    path('admin/manage-assets/', views.admin_manage_assets, name='admin_manage_assets'),
+    
+    #staff
     path('manage-assets/', views.staff_manage_assets, name='staff_manage_assets'),
     path('assets/add/', views.add_asset, name='add_asset'),
     path('assets/<int:pk>/edit/', views.edit_asset, name='edit_asset'),

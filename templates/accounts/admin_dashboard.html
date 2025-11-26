@@ -1,23 +1,160 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
-<div class="w-full px-4 py-8">
-    <div class="mb-6 text-center sm:text-left">
-        <h2 class="text-2xl font-bold text-nhc-blue">Admin Dashboard</h2>
-        <p class="text-gray-700 mt-1">Manage users, assets, and requests.</p>
-        <a href="{% url 'register' %}" class="inline-block mt-3 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
-            + Register New User
-        </a>
+<div
+  class="flex flex-col md:flex-row w-full max-w-7xl mx-auto mt-6 gap-6 px-4 relative"
+>
+  <!-- Sidebar -->
+  <aside
+    class="hidden md:flex flex-col w-64 bg-white rounded-xl shadow-md p-5 flex-shrink-0"
+    id="sidebar"
+  >
+    <h2 class="text-xl font-bold text-nhc-blue mb-6">ADMIN Menu</h2>
+    <nav class="flex flex-col space-y-3">
+
+      <!-- Dashboard -->
+      <a
+        href="{% url 'admin_dashboard' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/dashboard/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M4 10v10h16V10" />
+        </svg>
+        Dashboard
+      </a>
+
+      <!-- Manage Assets -->
+      <a
+        href="{% url 'assets:admin_manage_assets' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/manage-assets/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
+        </svg>
+        Manage Assets
+      </a>
+
+      <!-- Manage Requests -->
+      <a
+        href="{% url 'requests:admin_manage_requests' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/manage-requests/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        Manage Requests
+      </a>
+
+      <!-- Returned Assets -->
+      <a
+        href="{% url 'requests:admin_manage_returns' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/manage-returns/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h7V3l10 9-10 9v-7H3v-4z" />
+        </svg>
+        Returned Assets
+      </a>
+
+      <!-- Report -->
+      <a
+        href="{% url 'admin_report' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/report/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6a2 2 0 012-2h8M9 17v4m0-4H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3z" />
+        </svg>
+        Report
+      </a>
+
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div
+    id="mainContent"
+    class="flex-grow bg-white rounded-xl shadow-md p-6 md:p-6 z-10 relative transition-all duration-300"
+  >
+    {% block admin_content %}
+    <h2 class="text-2xl font-bold text-nhc-blue mb-4">Admin Dashboard</h2>
+    <p class="text-gray-700 mb-6">Overview of assets, requests, and returns.</p>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-gradient-to-b from-blue-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-blue hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Total Assets</p>
+        <h3 class="text-2xl font-bold text-nhc-blue mt-1">{{ total_assets }}</h3>
+      </div>
+      <div class="bg-gradient-to-b from-yellow-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-yellow hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Pending Requests</p>
+        <h3 class="text-2xl font-bold text-nhc-yellow mt-1">{{ pending_requests }}</h3>
+      </div>
+      <div class="bg-gradient-to-b from-green-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-green hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Approved Assets</p>
+        <h3 class="text-2xl font-bold text-nhc-green mt-1">{{ approved_assets }}</h3>
+      </div>
+      <div class="bg-gradient-to-b from-purple-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-purple hover:shadow-lg transition">
+        <p class="text-sm font-medium text-gray-500">Returned Assets</p>
+        <h3 class="text-2xl font-bold text-nhc-purple mt-1">{{ returned_assets }}</h3>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-nhc-yellow hover:shadow-lg transition">
-            <h5 class="text-lg font-semibold text-nhc-blue mb-2">Users</h5>
-            <p class="text-gray-600 mb-3">Manage user accounts and roles.</p>
-        </div>
-        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-nhc-blue hover:shadow-lg transition">
-            <h5 class="text-lg font-semibold text-nhc-blue mb-2">Assets</h5>
-            <p class="text-gray-600 mb-3">View and manage assets in the system.</p>
-        </div>
+    <!-- Recent Requests Table -->
+    <div class="bg-white shadow-md rounded-xl p-4">
+      <h3 class="text-lg font-semibold text-nhc-blue mb-3">Recent Requests</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-100 uppercase font-semibold">
+            <tr>
+              <th class="px-3 py-2 text-left">User</th>
+              <th class="px-3 py-2 text-left">Asset</th>
+              <th class="px-3 py-2 text-left">Status</th>
+              <th class="px-3 py-2 text-left">Request Date</th>
+              <th class="px-3 py-2 text-left">Return Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for req in recent_requests %}
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-3 py-2 font-medium">{{ req.user.username }}</td>
+              <td class="px-3 py-2">{{ req.asset.asset_name }} ({{ req.asset.model }})</td>
+              <td class="px-3 py-2">
+                <span class="px-2 py-1 rounded-full text-xs {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700{% elif req.status == 'approved' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                  {{ req.status|capfirst }}
+                </span>
+              </td>
+              <td class="px-3 py-2">{{ req.request_date|date:"M d, Y" }}</td>
+              <td class="px-3 py-2">{{ req.return_date|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-gray-500">No recent requests</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+    {% endblock %}
+  </div>
 </div>
+
+<!-- CSRF Script -->
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  window.csrftoken = getCookie("csrftoken");
+</script>
 {% endblock %}

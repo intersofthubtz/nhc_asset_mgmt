@@ -93,8 +93,47 @@ def register_user(request):
 @roles_required('admin')
 @nocache
 def admin_dashboard(request):
-    return render(request, 'accounts/admin_dashboard.html')
+    # Total assets
+    total_assets = Asset.objects.count()
 
+    # Pending requests
+    pending_requests = AssetRequest.objects.filter(status='pending').count()
+
+    # Approved assets (borrowed)
+    approved_assets_qs = Asset.objects.filter(status='borrowed')
+    approved_assets = approved_assets_qs.count()
+
+    # Returned assets
+    returned_assets_qs = Asset.objects.filter(status='returned')
+    returned_assets = returned_assets_qs.count()
+
+    # Recent requests
+    recent_requests = AssetRequest.objects.filter(status='pending').order_by('-request_date')[:10]
+
+    context = {
+        'total_assets': total_assets,
+        'pending_requests': pending_requests,
+        'approved_assets': approved_assets,
+        'returned_assets': returned_assets,
+        'recent_requests': recent_requests,
+    }
+    return render(request, 'accounts/admin_dashboard.html', context)
+
+
+@login_required
+def admin_report(request):
+    # prepare context
+    context = {
+        # e.g., 'total_assets': ..., 'pending_requests': ...
+    }
+    return render(request, 'accounts/admin_report.html', context)
+
+
+
+
+    
+@login_required
+@roles_required('staff')
 def staff_dashboard(request):
     # Total assets
     total_assets = Asset.objects.count()
@@ -143,12 +182,6 @@ def staff_manage_requests(request):
 def staff_report(request):
     # Optional: pass data for reports
     return render(request, 'assets/staff_report.html')
-
-# @login_required
-# @roles_required('normal')
-# @nocache
-# def normal_dashboard(request):
-#     return render(request, 'accounts/normal_dashboard.html')
 
 
 @login_required

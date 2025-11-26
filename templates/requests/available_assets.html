@@ -1,15 +1,18 @@
 {% extends "base.html" %}
+
 {% block content %}
+
 <div class="w-full max-w-6xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
 
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+  <!-- Page Header -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <div>
-      <h2 class="text-2xl sm:text-3xl font-bold text-nhc-blue tracking-tight">Available Assets</h2>
+      <h2 class="text-2xl sm:text-3xl font-bold text-nhc-blue">Available Assets</h2>
       <p class="text-gray-600 mt-1 text-sm sm:text-base">
         {{ assets.paginator.count }} assets available for borrowing
       </p>
     </div>
+
     <a href="{% url 'normal_dashboard' %}"
        class="flex items-center gap-2 text-nhc-blue hover:text-nhc-yellow font-semibold text-sm sm:text-base transition">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -18,59 +21,70 @@
       </svg>
       Back to Dashboard
     </a>
-  </div>
+  </header>
 
-  <!-- Search & Filter -->
+  <!-- Search & Filters -->
   <form method="get" id="searchForm"
-        class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5 bg-white p-3 rounded-md shadow-sm">
-    <div class="flex items-center gap-2 w-full sm:w-auto flex-grow">
-      <input type="text" name="q" value="{{ query }}" id="searchInput"
-             placeholder="Search by asset name or model..."
-             class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-nhc-blue focus:border-transparent w-full sm:w-80 transition"/>
-    </div>
-    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-      <select name="condition" id="conditionSelect"
-              class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-nhc-blue focus:border-transparent transition w-full sm:w-44">
-        <option value="">All Conditions</option>
-        <option value="good" {% if condition_filter == 'good' %}selected{% endif %}>Good</option>
-        <option value="fair" {% if condition_filter == 'fair' %}selected{% endif %}>Fair</option>
-        <option value="poor" {% if condition_filter == 'poor' %}selected{% endif %}>Poor</option>
-      </select>
-    </div>
+        class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5 bg-white p-4 rounded-md shadow-sm">
+
+    <!-- Search Input -->
+    <input type="text"
+           id="searchInput"
+           name="q"
+           value="{{ query }}"
+           placeholder="Search by asset name or description..."
+           class="px-4 py-2 w-full sm:w-80 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-nhc-blue transition"/>
+
+    <!-- Condition Filter -->
+    <select name="condition"
+            id="conditionSelect"
+            class="px-4 py-2 w-full sm:w-44 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-nhc-blue transition">
+      <option value="">All Conditions</option>
+      <option value="good" {% if condition_filter == 'good' %}selected{% endif %}>Good</option>
+      <option value="fair" {% if condition_filter == 'fair' %}selected{% endif %}>Fair</option>
+      <option value="poor" {% if condition_filter == 'poor' %}selected{% endif %}>Poor</option>
+    </select>
+
   </form>
 
-  <!-- Table -->
+  <!-- Asset Table -->
   <div class="overflow-x-auto bg-white shadow-md rounded-lg border border-gray-100">
     <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
       <thead class="bg-nhc-blue text-white">
-        <tr>
-          <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Asset Name</th>
-          <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Model</th>
-          <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Specifications</th>
-          <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Description</th>
-          <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Condition</th>
-          <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Action</th>
-        </tr>
+      <tr>
+        <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Asset Name</th>
+        <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Description</th>
+        <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Condition</th>
+        <th class="py-3 px-4 text-left font-medium uppercase tracking-wider">Action</th>
+      </tr>
       </thead>
+
       <tbody class="divide-y divide-gray-100">
-        {% for asset in assets %}
-        <tr class="hover:bg-gray-50 transition duration-200 ease-in-out">
+      {% for asset in assets %}
+        <tr class="hover:bg-gray-50 transition">
           <td class="py-3 px-4 font-semibold text-gray-900">{{ asset.asset_name }}</td>
-          <td class="py-3 px-4 text-gray-700">{{ asset.model|default:"N/A" }}</td>
-          <td class="py-3 px-4 text-gray-700">{{ asset.specification|default:"-" }}</td>
-          <td class="py-3 px-4 text-gray-700">{{ asset.description|default:"-" }}</td>
-          <td class="py-3 px-4">
-            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
-              {% if asset.asset_condition == 'good' %}bg-green-100 text-green-700
-              {% elif asset.asset_condition == 'fair' %}bg-yellow-100 text-yellow-700
-              {% elif asset.asset_condition == 'poor' %}bg-red-100 text-red-700{% endif %}">
-              {{ asset.get_asset_condition_display }}
-            </span>
+
+          <td class="py-3 px-4 text-gray-700 truncate max-w-xs">
+            {{ asset.description|default:"-" }}
           </td>
+
+          <td class="py-3 px-4">
+            {% with condition=asset.asset_condition %}
+              <span class="
+                inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
+                {% if condition == 'good' %}bg-green-100 text-green-700
+                {% elif condition == 'fair' %}bg-yellow-100 text-yellow-700
+                {% else %}bg-red-100 text-red-700{% endif %}
+              ">
+                {{ asset.get_asset_condition_display }}
+              </span>
+            {% endwith %}
+          </td>
+
           <td class="py-3 px-4">
             <button type="button"
-               class="inline-flex items-center gap-2 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-lg shadow hover:shadow-md hover:bg-yellow-500 focus:ring-2 focus:ring-nhc-blue transition"
-               onclick="openRequestModal('{{ asset.id }}', '{{ asset.asset_name|escapejs }}', '{{ asset.model|default:'N/A'|escapejs }}')">
+                    onclick="openRequestModal('{{ asset.id }}', '{{ asset.asset_name|escapejs }}', '{{ asset.description|default:'N/A'|escapejs }}')"
+                    class="inline-flex items-center gap-2 bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-lg shadow hover:shadow-md hover:bg-yellow-500 transition">
               Request
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -79,58 +93,74 @@
             </button>
           </td>
         </tr>
-        {% empty %}
+      {% empty %}
         <tr>
           <td colspan="6" class="py-8 text-center text-gray-500">
             <div class="flex flex-col items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 17v-2a4 4 0 018 0v2"/>
               </svg>
-              <p class="text-gray-500">No assets currently available for borrowing.</p>
+              <p>No assets found{% if query %} for “{{ query }}”{% endif %}.</p>
             </div>
           </td>
         </tr>
-        {% endfor %}
+      {% endfor %}
       </tbody>
+
     </table>
   </div>
 
   <!-- Pagination -->
   {% if assets.has_other_pages %}
-  <div class="flex justify-center items-center mt-6 gap-2 text-sm sm:text-base">
-    {% if assets.has_previous %}
-      <a href="?page={{ assets.previous_page_number }}&q={{ query }}&condition={{ condition_filter }}"
-         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">Previous</a>
-    {% else %}
-      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">Previous</span>
-    {% endif %}
-    {% for num in assets.paginator.page_range %}
-      {% if num == assets.number %}
-        <span class="px-4 py-2 bg-nhc-yellow text-nhc-black rounded-md font-semibold shadow">{{ num }}</span>
+    <nav class="flex justify-center items-center mt-6 gap-2 text-sm sm:text-base">
+      {% if assets.has_previous %}
+        <a href="?page={{ assets.previous_page_number }}&q={{ query }}&condition={{ condition_filter }}"
+           class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">
+          Previous
+        </a>
       {% else %}
-        <a href="?page={{ num }}&q={{ query }}&condition={{ condition_filter }}"
-           class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">{{ num }}</a>
+        <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md">Previous</span>
       {% endif %}
-    {% endfor %}
-    {% if assets.has_next %}
-      <a href="?page={{ assets.next_page_number }}&q={{ query }}&condition={{ condition_filter }}"
-         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">Next</a>
-    {% else %}
-      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">Next</span>
-    {% endif %}
-  </div>
+
+      {% for num in assets.paginator.page_range %}
+        {% if num == assets.number %}
+          <span class="px-4 py-2 bg-nhc-yellow text-nhc-black rounded-md font-semibold shadow">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}&q={{ query }}&condition={{ condition_filter }}"
+             class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">
+            {{ num }}
+          </a>
+        {% endif %}
+      {% endfor %}
+
+      {% if assets.has_next %}
+        <a href="?page={{ assets.next_page_number }}&q={{ query }}&condition={{ condition_filter }}"
+           class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">
+          Next
+        </a>
+      {% else %}
+        <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md">Next</span>
+      {% endif %}
+    </nav>
   {% endif %}
+
 </div>
 
-<!-- Request Modal -->
-<div id="requestModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+<!-- Modal -->
+<div id="requestModal"
+     class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50"
+     role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
-    <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-600" onclick="closeRequestModal()">
+
+    <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+            onclick="closeRequestModal()">
       ✕
     </button>
-    <h2 class="text-2xl font-bold text-nhc-blue mb-2">Request Asset</h2>
+
+    <h2 id="modalTitle" class="text-2xl font-bold text-nhc-blue mb-2">Request Asset</h2>
     <p id="assetInfo" class="text-gray-600 mb-4"></p>
 
     <form id="requestForm" method="post" class="space-y-5">
@@ -138,62 +168,71 @@
       <input type="hidden" name="asset_id" id="asset_id">
 
       <div>
-        <label for="request_date" class="block text-gray-700 font-medium mb-1">Request Date</label>
-        <input type="date" name="request_date" id="request_date" required
-               class="w-full border-gray-300 rounded-md p-3 focus:border-nhc-yellow focus:ring-2 focus:ring-nhc-yellow transition">
+        <label class="block text-gray-700 font-medium mb-1">Request Date</label>
+        <input type="date" id="request_date" name="request_date" required
+               class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow">
       </div>
 
       <div>
-        <label for="return_date" class="block text-gray-700 font-medium mb-1">Expected Return Date</label>
-        <input type="date" name="return_date" id="return_date" required
-               class="w-full border-gray-300 rounded-md p-3 focus:border-nhc-yellow focus:ring-2 focus:ring-nhc-yellow transition">
+        <label class="block text-gray-700 font-medium mb-1">Expected Return Date</label>
+        <input type="date" id="return_date" name="return_date" required
+               class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow">
       </div>
 
       <div class="flex justify-end gap-3 mt-6">
-        <button type="button" onclick="closeRequestModal()" 
-                class="bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-md hover:bg-gray-300 transition">
+        <button type="button"
+                onclick="closeRequestModal()"
+                class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
           Cancel
         </button>
+
         <button type="submit"
                 class="bg-nhc-yellow text-nhc-black font-semibold py-2 px-6 rounded-md hover:bg-yellow-500 transition">
           Submit Request
         </button>
       </div>
     </form>
+
   </div>
 </div>
 
-<!-- JS: Modal and Filters -->
+<!-- JavaScript -->
 <script>
-  const searchInput = document.getElementById('searchInput');
-  const conditionSelect = document.getElementById('conditionSelect');
-  const searchForm = document.getElementById('searchForm');
+  // Debounced Search
   let typingTimer;
-  const delay = 600;
+  const searchInput = document.getElementById("searchInput");
+  const conditionSelect = document.getElementById("conditionSelect");
+  const searchForm = document.getElementById("searchForm");
+  const DEBOUNCE_DELAY = 400;
 
-  searchInput.addEventListener('keyup', () => {
+  searchInput.addEventListener("keyup", () => {
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => searchForm.submit(), delay);
+    typingTimer = setTimeout(() => searchForm.submit(), DEBOUNCE_DELAY);
   });
-  searchInput.addEventListener('keydown', () => clearTimeout(typingTimer));
-  conditionSelect.addEventListener('change', () => searchForm.submit());
 
-  // Modal functions
-  const modal = document.getElementById('requestModal');
-  const assetInfo = document.getElementById('assetInfo');
-  const assetIdInput = document.getElementById('asset_id');
+  searchInput.addEventListener("keydown", () => clearTimeout(typingTimer));
+  conditionSelect.addEventListener("change", () => searchForm.submit());
 
-  function openRequestModal(id, name, model) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    assetInfo.innerHTML = `<strong>${name}</strong> - ${model}`;
+  // Modal Controls
+  const modal = document.getElementById("requestModal");
+  const assetInfo = document.getElementById("assetInfo");
+  const assetIdInput = document.getElementById("asset_id");
+
+  function openRequestModal(id, name, description) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    assetInfo.innerHTML = `<strong>${name}</strong> — ${description || 'No description available.'}`;
     assetIdInput.value = id;
+
+    document.getElementById("request_date").focus();
   }
 
   function closeRequestModal() {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.getElementById('requestForm').reset();
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.getElementById("requestForm").reset();
   }
 </script>
+
 {% endblock %}

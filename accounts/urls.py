@@ -11,6 +11,8 @@ urlpatterns = [
 
     # Dashboards
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin/report/', views.admin_report, name='admin_report'),
+    
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
     path('staff/manage-assets/', views.staff_manage_assets, name='staff_manage_assets'),
     path('staff/manage-requests/', views.staff_manage_requests, name='staff_manage_requests'),

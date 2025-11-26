@@ -5,6 +5,8 @@ import openpyxl
 from django.utils import timezone
 import datetime
 from openpyxl.styles import Font, PatternFill
+
+from accounts.views import roles_required
 from .models import Asset
 from .forms import AssetForm
 from requests.models import AssetRequest
@@ -15,15 +17,43 @@ from django.http import HttpResponse
 from django.db.models import Q
 
 
-# @login_required
-# def staff_manage_assets(request):
-#     assets = Asset.objects.all().order_by('-created_at')
-#     paginator = Paginator(assets, 5)
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-#     return render(request, 'assets/staff_manage_assets.html', {
-#         'page_obj': page_obj
-#     })
+@login_required
+def admin_manage_assets(request):
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', 'all')
+    condition_filter = request.GET.get('condition', 'all')
+
+    assets = Asset.objects.all().order_by('-created_at')
+
+    if search_query:
+        assets = assets.filter(
+            Q(asset_name__icontains=search_query) |
+            Q(model__icontains=search_query) |
+            Q(serial_number__icontains=search_query) |
+            Q(barcode__icontains=search_query)
+        )
+
+    if status_filter != 'all':
+        assets = assets.filter(status=status_filter)
+
+    if condition_filter != 'all':
+        assets = assets.filter(asset_condition=condition_filter)
+
+    paginator = Paginator(assets, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'condition_filter': condition_filter,
+    }
+    return render(request, 'assets/admin_manage_assets.html', context)
+
+
+@login_required
+# def admin
 
 
 @login_required
@@ -61,14 +91,10 @@ def staff_manage_assets(request):
     return render(request, 'assets/staff_manage_assets.html', context)
 
 
-
-
 @login_required
 def asset_detail(request, pk):
     asset = get_object_or_404(Asset, pk=pk)
     return render(request, 'assets/asset_detail.html', {'asset': asset})
-
-
 
 @login_required
 def add_asset(request):
@@ -107,20 +133,15 @@ def delete_asset(request, pk):
     return render(request, 'assets/asset_confirm_delete.html', {'asset': asset})
 
 
-
-@login_required
-def staff_dashboard(request):
-    total_assets = Asset.objects.count()
-    # You can add more counts, e.g., total requests if you have a Request model
-    context = {
-        'total_assets': total_assets,
-        'user': request.user,
-    }
-    return render(request, 'accounts/staff_dashboard.html', context)
-
-
-
-
+# @login_required
+# def staff_dashboard(request):
+#     total_assets = Asset.objects.count()
+#     # You can add more counts, e.g., total requests if you have a Request model
+#     context = {
+#         'total_assets': total_assets,
+#         'user': request.user,
+#     }
+#     return render(request, 'accounts/staff_dashboard.html', context)
 
 
 
