@@ -1,0 +1,47 @@
+{% comment %} {% extends "accounts/admin_dashboard.html" %}
+
+{% block admin_content %}
+<h2 class="text-2xl font-bold text-nhc-blue mb-3">Logs</h2>
+
+<form method="get" class="mb-4 flex gap-2">
+    <input 
+        type="search" 
+        name="q" 
+        placeholder="Search logs..." 
+        value="{{ request.GET.q|default:'' }}" 
+        class="border rounded px-2 py-1 flex-grow"
+    >
+    <button type="submit" class="bg-nhc-blue text-white px-3 py-1 rounded">Search</button>
+</form>
+
+<table class="min-w-full bg-white shadow-md rounded overflow-hidden">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="px-4 py-2 text-left">User</th>
+            <th class="px-4 py-2 text-left">Action</th>
+            <th class="px-4 py-2 text-left">IP Address</th>
+            <th class="px-4 py-2 text-left">Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-2">
+                {% if log.user %}
+                    {{ log.user.username }}
+                {% else %}
+                    Unknown
+                {% endif %}
+            </td>
+            <td class="px-4 py-2">{{ log.action }}</td>
+            <td class="px-4 py-2">{{ log.ip_address|default:"N/A" }}</td>
+            <td class="px-4 py-2">{{ log.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-center py-4">No logs found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %} {% endcomment %}

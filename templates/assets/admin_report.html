@@ -1,0 +1,100 @@
+{% extends "accounts/admin_dashboard.html" %}
+{% block admin_content %}
+
+<h2 class="text-2xl font-bold text-nhc-blue mb-3">Reports</h2>
+<p class="text-gray-700 mb-6">
+  Generate asset usage or request summary reports in Excel format.
+</p>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <!-- Asset Usage Report -->
+  <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
+    <h5 class="text-lg font-semibold text-nhc-blue mb-2">Asset Usage Report</h5>
+    <p class="text-gray-600 mb-3">Track how often each asset has been borrowed.</p>
+    <button onclick="openReportModal('asset_usage')" 
+            class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
+      Export Report
+    </button>
+  </div>
+
+  <!-- Request Summary -->
+  <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
+    <h5 class="text-lg font-semibold text-nhc-blue mb-2">Request Summary</h5>
+    <p class="text-gray-600 mb-3">See pending, approved, and rejected requests.</p>
+    <button onclick="openReportModal('request_summary')" 
+            class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
+      Export Report
+    </button>
+  </div>
+
+</div>
+
+<!-- Report Modal -->
+<div id="reportModal" class="fixed inset-x-0 top-10 hidden z-50">
+  <div class="bg-white rounded-xl w-full max-w-md p-6 mx-auto transform transition-all scale-100">
+    <h2 class="text-xl font-bold mb-4 text-start text-nhc-blue">
+      Select Filters (Optional)
+    </h2>
+
+    <form id="reportForm" method="GET" target="_blank" action="">
+      <input type="hidden" name="report_type" id="modalReportType">
+
+      <!-- Username Filter (Only visible on Request Summary) -->
+      <div id="usernameFilterSection" class="mb-3 hidden">
+        <label class="block text-sm font-medium mb-1">
+          User Name <span class="text-gray-400 text-xs">(optional)</span>
+        </label>
+        <input type="text" name="username" 
+               class="w-full border px-3 py-2 rounded" 
+               placeholder="Enter username">
+      </div>
+
+      <!-- Date Range -->
+      <div class="mb-3">
+        <label class="block text-sm font-medium mb-1">Start Date <span class="text-gray-400 text-xs">(optional)</span></label>
+        <input type="date" name="start_date" class="w-full border px-3 py-2 rounded">
+      </div>
+
+      <div class="mb-3">
+        <label class="block text-sm font-medium mb-1">End Date <span class="text-gray-400 text-xs">(optional)</span></label>
+        <input type="date" name="end_date" class="w-full border px-3 py-2 rounded">
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex justify-end gap-2 pt-4">
+        <button type="button" onclick="closeReportModal()" 
+                class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+        <button type="submit" 
+                class="px-4 py-2 bg-nhc-blue text-white rounded hover:bg-blue-700">Export</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openReportModal(reportType) {
+    const modal = document.getElementById("reportModal");
+    const usernameField = document.getElementById("usernameFilterSection");
+    document.getElementById("modalReportType").value = reportType;
+    const form = document.getElementById("reportForm");
+
+    form.action = `/assets/admin/export-report/${reportType}/`;
+
+    // Show Username field only for request_summary
+    if (reportType === "request_summary") {
+      usernameField.classList.remove("hidden");
+    } else {
+      usernameField.classList.add("hidden");
+    }
+
+    modal.classList.remove("hidden");
+  }
+
+  function closeReportModal() {
+    const modal = document.getElementById("reportModal");
+    modal.classList.add("hidden");
+  }
+</script>
+
+{% endblock %}

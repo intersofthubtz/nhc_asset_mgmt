@@ -158,7 +158,7 @@
     document.getElementById('actionModal').classList.remove('hidden');
     document.getElementById('modalTitle').textContent = `${action.charAt(0).toUpperCase()+action.slice(1)} Request`;
     const form = document.getElementById('actionForm');
-    form.action = `/requests/request/${requestId}/${action}/`;
+    form.action = `/requests/staff/manage-request/${requestId}/${action}/`;
     document.getElementById('modalSubmitBtn').textContent = action.charAt(0).toUpperCase()+action.slice(1);
   }
   function closeActionModal(){

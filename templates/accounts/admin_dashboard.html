@@ -67,6 +67,17 @@
         Report
       </a>
 
+      {% comment %} logs {% endcomment %}
+      {% comment %} <a
+        href="{% url 'admin_logs' %}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/logs/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h7V3l10 9-10 9v-7H3v-4z" />
+        </svg>
+        Logs
+      </a> {% endcomment %}
+
     </nav>
   </aside>
 

@@ -92,6 +92,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nhc_asset_mgmt_db',
+        # 'NAME': 'nhc_asset_management',
         'USER': 'root',             
         'PASSWORD': 'dario123',            
         'HOST': 'localhost',

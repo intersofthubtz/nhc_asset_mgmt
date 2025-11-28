@@ -14,3 +14,19 @@ class User(AbstractUser):
         if self.is_superuser:
             self.role = 'admin'
         super().save(*args, **kwargs)
+
+
+
+# class Log(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+#     action = models.CharField(max_length=255)
+#     ip_address = models.GenericIPAddressField(null=True, blank=True)
+#     related_asset = models.ForeignKey('assets.Asset', null=True, blank=True, on_delete=models.SET_NULL)
+#     related_request = models.ForeignKey('assets.AssetRequest', null=True, blank=True, on_delete=models.SET_NULL)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return f"{self.user} | {self.action} | {self.created_at}"
+
+
+

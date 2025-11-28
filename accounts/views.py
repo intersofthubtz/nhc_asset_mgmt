@@ -1,3 +1,4 @@
+import datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -6,6 +7,9 @@ from functools import wraps
 from django.db.models import Count
 from django.http import HttpResponse
 from django.utils import timezone
+import openpyxl
+from openpyxl.styles import Font, PatternFill
+from assets.forms import AssetForm
 from assets.models import Asset
 from requests.models import AssetRequest
 from .forms import UserRegistrationForm, UserLoginForm
@@ -121,13 +125,13 @@ def admin_dashboard(request):
 
 
 @login_required
+@roles_required('admin')
 def admin_report(request):
     # prepare context
     context = {
         # e.g., 'total_assets': ..., 'pending_requests': ...
     }
-    return render(request, 'accounts/admin_report.html', context)
-
+    return render(request, 'assets/admin_report.html', context)
 
 
 
@@ -176,12 +180,32 @@ def staff_manage_requests(request):
     requests = AssetRequest.objects.select_related('user', 'asset').all()
     return render(request, 'requests/staff_manage_requests.html', {'requests': requests})
 
+
 @login_required
 @roles_required('staff')
 @nocache
 def staff_report(request):
-    # Optional: pass data for reports
-    return render(request, 'assets/staff_report.html')
+    # prepare context
+    context = {
+        # e.g., 'total_assets': ..., 'pending_requests': ...
+    }
+    return render(request, 'assets/staff_report.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @login_required

@@ -45,6 +45,7 @@
         <th class="py-3 px-4 text-left">Condition</th>
         <th class="py-3 px-4 text-left">Returned Date</th>
         <th class="py-3 px-4 text-left">Remarks</th>
+        <th class="py-3 px-4 text-left">Received By</th>
         <th class="py-3 px-4 text-left">Action</th>
       </tr>
     </thead>
@@ -82,6 +83,15 @@
         <td class="py-3 px-4">
           {% if return %}
             {{ return.remarks|default:"-" }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+
+        <!-- Received By -->
+        <td class="py-3 px-4">
+          {% if return %}
+            {{ return.received_by.username }}
           {% else %}
             -
           {% endif %}
@@ -247,7 +257,7 @@ document.getElementById("returnForm").addEventListener("submit", function(e){
   const reqId = document.getElementById('modalReqId').value;
   const formData = new FormData(form);
 
-  fetch("{% url 'requests:staff_mark_returned' 0 %}".replace("0", reqId), {
+  fetch("{% url 'requests:admin_mark_returned' 0 %}".replace("0", reqId), {
     method: 'POST',
     headers: {'X-Requested-With': 'XMLHttpRequest'},
     body: formData
