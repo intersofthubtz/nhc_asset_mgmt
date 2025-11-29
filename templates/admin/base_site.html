@@ -3,6 +3,13 @@
 
 {% block title %}NHC Asset Management{% endblock %}
 
+{% block extrahead %}
+{{ block.super }}
+<!-- Favicon -->
+<link rel="shortcut icon" href="{% static 'images/nhc-logo.png' %}" type="image/x-icon">
+<link rel="icon" href="{% static 'images/nhc-logo.png' %}" type="image/x-icon">
+{% endblock %}
+
 {% block branding %}
 <div style="display:flex; align-items:center; gap:10px;">
     <img src="{% static 'images/nhc-logo.png' %}" style="height:40px;">
