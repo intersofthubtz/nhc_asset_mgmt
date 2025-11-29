@@ -1,0 +1,141 @@
+{% extends "admin/login.html" %}
+{% load static %}
+
+{% block title %}NHC Admin Portal{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    :root {
+        --nhc-dark-blue: #0F5391;
+        --nhc-teal: #9db6c5ff;
+        --nhc-yellow: #FABA00;
+        --nhc-black: #000000;
+    }
+
+    body.login {
+        background: url("{% static 'images/image1.png' %}") no-repeat center center fixed;
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+        position: relative;
+    }
+
+    /* Blue overlay on top of hero background */
+    body.login::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 83, 145, 0.45); /* NHC Blue tint */
+        backdrop-filter: blur(2px);
+        z-index: -1;
+    }
+
+    #container {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 380px;
+        padding: 40px 35px;
+        border: none;
+        box-shadow: 0px 10px 32px rgba(0, 0, 0, 0.25);
+        animation: fadeIn 0.7s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #site-name {
+        color: var(--nhc-yellow);
+        font-weight: 900;
+        font-size: 26px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+
+    /* Form elements */
+    .form-row label {
+        color: var(--nhc-dark-blue);
+        font-weight: 600;
+    }
+
+    .form-row input {
+        border: 2px solid var(--nhc-teal);
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .form-row input:focus {
+        border-color: var(--nhc-dark-blue);
+        outline: none;
+    }
+
+    /* Login button */
+    .submit-row input {
+        width: 100%;
+        background: var(--nhc-dark-blue) !important;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 700;
+        padding: 12px;
+        margin-top: 10px;
+        border: none;
+        transition: 0.3s;
+        text-transform: uppercase;
+    }
+    .submit-row input:hover {
+        background: var(--nhc-yellow) !important;
+        color: var(--nhc-black) !important;
+    }
+
+    /* Password Reset link */
+    .password-reset-link a {
+        color: #ffffff;
+        text-decoration: underline;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    .password-reset-link a:hover {
+        opacity: 1;
+        color: var(--nhc-yellow);
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div style="text-align:center;">
+    <img src="{% static 'images/nhc-logo.png' %}" 
+         alt="NHC Logo"
+         style="height:75px; margin-bottom:12px;">
+    <h1 id="site-name">NHC Admin Portal</h1>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+{% comment %} {% extends "admin/login.html" %}
+{% load static %}
+
+{% block title %}NHC Admin Portal{% endblock %}
+
+{% block branding %}
+<div style="text-align:center; margin-top:0; margin-bottom:20px;">
+    <img src="{% static 'images/nhc-logo.png' %}" 
+         alt="NHC Logo" 
+         style="height:40px; margin-bottom:10px;">
+         
+    <h1 id="site-name" 
+        style="textcolor:#0F5391; font-weight:700; font-size:24px; margin:0;">
+        NHC Admin Portal
+    </h1>
+</div>
+{% endblock %} {% endcomment %}

@@ -1,0 +1,165 @@
+{% extends "accounts/staff_dashboard.html" %}
+{% load widget_tweaks %}
+
+{% block staff_content %}
+
+<!-- Breadcrumb -->
+<nav class="mb-6 text-sm text-gray-500" aria-label="Breadcrumb">
+  <ol class="flex items-center">
+    <li>
+      <a href="{% url 'staff_dashboard' %}" class="hover:text-gray-700 hover:underline">
+        Dashboard
+      </a>
+    </li>
+    <li><span class="mx-2 text-gray-400">/</span></li>
+    <li class="text-gray-700 font-medium">Manage Assets</li>
+  </ol>
+</nav>
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+  <h2 class="text-2xl font-bold text-nhc-blue">Manage Assets</h2>
+  <a href="{% url 'assets:add_asset' %}"
+     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-2">
+    <i class="fas fa-plus"></i> Add New Asset
+  </a>
+</div>
+
+<!-- Search & Filters -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+  <!-- Search Bar -->
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Search by name, model, or serial..."
+    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow focus:outline-none"
+  >
+
+  <!-- Filters -->
+  <div class="flex gap-3 w-full sm:w-auto">
+    <select id="statusFilter"
+      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow focus:outline-none">
+      <option value="all">All Status</option>
+      <option value="Available">Available</option>
+      <option value="Issued">Issued</option>
+      <option value="Returned">Returned</option>
+    </select>
+    <select id="conditionFilter"
+      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow focus:outline-none">
+      <option value="all">All Conditions</option>
+      <option value="Good">Good</option>
+      <option value="Damaged">Damaged</option>
+      <option value="Lost">Lost</option>
+    </select>
+  </div>
+</div>
+
+<!-- Assets Table -->
+<div class="overflow-x-auto bg-white shadow-md rounded-lg">
+  <table class="min-w-full text-sm sm:text-base divide-y divide-gray-200" id="assetsTable">
+    <thead class="bg-gray-100 text-gray-700 uppercase font-semibold select-none">
+      <tr>
+        <th class="px-4 py-3 text-left cursor-pointer" onclick="sortTable(0)">Asset Name</th>
+        <th class="px-4 py-3 text-left cursor-pointer" onclick="sortTable(1)">Model</th>
+        <th class="px-4 py-3 text-left cursor-pointer" onclick="sortTable(2)">Serial</th>
+        <th class="px-4 py-3 text-left cursor-pointer" onclick="sortTable(3)">Barcode</th>
+        <th class="px-4 py-3 text-left cursor-pointer" onclick="sortTable(4)">Status</th>
+        <th class="px-4 py-3 text-left cursor-pointer" onclick="sortTable(5)">Condition</th>
+        <th class="px-4 py-3 text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for asset in assets %}
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 font-semibold text-nhc-blue">{{ asset.asset_name }}</td>
+        <td class="px-4 py-3">{{ asset.model|default:"—" }}</td>
+        <td class="px-4 py-3">{{ asset.serial_number|default:"—" }}</td>
+        <td class="px-4 py-3">{{ asset.barcode|default:"—" }}</td>
+        <td class="px-4 py-3">
+          <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-full
+            {% if asset.status == 'Available' %}bg-green-100 text-green-700
+            {% elif asset.status == 'Issued' %}bg-yellow-100 text-yellow-700
+            {% elif asset.status == 'Returned' %}bg-blue-100 text-blue-700{% endif %}">
+            {{ asset.status }}
+          </span>
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-block text-xs sm:text-sm font-medium px-3 py-1 rounded-full
+            {% if asset.asset_condition == 'Good' %}bg-green-100 text-green-700
+            {% elif asset.asset_condition == 'Damaged' %}bg-red-100 text-red-700
+            {% elif asset.asset_condition == 'Lost' %}bg-gray-200 text-gray-700{% endif %}">
+            {{ asset.asset_condition }}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-center flex justify-center gap-3">
+          <a href="{% url 'assets:asset_detail' asset.pk %}" class="text-gray-600 hover:text-gray-800" title="View">
+            <i class="fas fa-eye"></i>
+          </a>
+          <a href="{% url 'assets:edit_asset' asset.pk %}" class="text-blue-600 hover:text-blue-800" title="Edit">
+            <i class="fas fa-edit"></i>
+          </a>
+          <a href="{% url 'assets:delete_asset' asset.pk %}" class="text-red-600 hover:text-red-800" title="Delete">
+            <i class="fas fa-trash"></i>
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="text-center py-6 text-gray-500">No assets found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- JS for Search, Filter, Sort -->
+<script>
+  // Search Function
+  document.getElementById("searchInput").addEventListener("keyup", function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll("#assetsTable tbody tr").forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(filter) ? "" : "none";
+    });
+  });
+
+  // Filter by Status or Condition
+  const statusFilter = document.getElementById("statusFilter");
+  const conditionFilter = document.getElementById("conditionFilter");
+
+  function applyFilters() {
+    const statusValue = statusFilter.value.toLowerCase();
+    const conditionValue = conditionFilter.value.toLowerCase();
+    document.querySelectorAll("#assetsTable tbody tr").forEach(row => {
+      const statusText = row.querySelector("td:nth-child(5)").innerText.toLowerCase();
+      const conditionText = row.querySelector("td:nth-child(6)").innerText.toLowerCase();
+      row.style.display =
+        (statusValue === "all" || statusText.includes(statusValue)) &&
+        (conditionValue === "all" || conditionText.includes(conditionValue))
+          ? ""
+          : "none";
+    });
+  }
+
+  statusFilter.addEventListener("change", applyFilters);
+  conditionFilter.addEventListener("change", applyFilters);
+
+  // Sorting Logic
+  let sortDirection = true;
+  function sortTable(columnIndex) {
+    const table = document.getElementById("assetsTable");
+    const rows = Array.from(table.tBodies[0].rows);
+    const isNumeric = !isNaN(rows[0].cells[columnIndex].innerText.trim());
+    rows.sort((a, b) => {
+      const aText = a.cells[columnIndex].innerText.trim().toLowerCase();
+      const bText = b.cells[columnIndex].innerText.trim().toLowerCase();
+      return isNumeric
+        ? (sortDirection ? aText - bText : bText - aText)
+        : (sortDirection ? aText.localeCompare(bText) : bText.localeCompare(aText));
+    });
+    rows.forEach(row => table.tBodies[0].appendChild(row));
+    sortDirection = !sortDirection;
+  }
+</script>
+
+{% endblock %}

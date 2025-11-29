@@ -1,0 +1,16 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}NHC Asset Management{% endblock %}
+
+{% block branding %}
+<div style="display:flex; align-items:center; gap:10px;">
+    <img src="{% static 'images/nhc-logo.png' %}" style="height:40px;">
+    <h1 id="site-name" style="margin:0;">NHC Asset Management</h1>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/nhc-admin.css' %}">
+{% endblock %}

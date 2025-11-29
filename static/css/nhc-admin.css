@@ -1,0 +1,69 @@
+:root {
+    --nhc-dark-blue: #0F5391;
+    --nhc-teal: #208DCE;
+    --nhc-yellow: #FABA00;
+    --nhc-black: #000000;
+}
+
+/* Header Bar */
+#header {
+    background: var(--nhc-dark-blue);
+    color: #ffffff;
+}
+
+#header a:link,
+#header a:visited {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* Sidebar */
+.module h2,
+#content-related .module h2 {
+    background: var(--nhc-teal) !important;
+    color: #ffffff !important;
+    padding: 10px;
+    border-radius: 6px 6px 0 0;
+}
+
+/* Panels */
+.module {
+    border: 1px solid var(--nhc-teal) !important;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* Table Styling */
+table {
+    border-collapse: collapse;
+}
+
+thead th {
+    background: var(--nhc-teal) !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background: #f4faff;
+}
+
+/* Buttons */
+.button, input[type=submit], .deletelink, .default {
+    background: var(--nhc-dark-blue) !important;
+    color: #fff !important;
+    border-radius: 6px;
+    border: none !important;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+.button:hover, input[type=submit]:hover {
+    background: var(--nhc-yellow) !important;
+    color: var(--nhc-black) !important;
+}
+
+/* Remove Django purple */
+#branding h1 {
+    color: #fff !important;
+}

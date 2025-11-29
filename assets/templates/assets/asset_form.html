@@ -1,0 +1,59 @@
+{% extends "accounts/staff_dashboard.html" %}
+{% load widget_tweaks %}
+
+{% block staff_content %}
+<!-- Breadcrumb / Link Path -->
+<nav class="mb-6 text-sm text-gray-500" aria-label="Breadcrumb">
+    <ol class="list-reset flex">
+        <li>
+            <a href="{% url 'assets:staff_manage_assets' %}" class="text-gray-500 hover:text-gray-700 hover:underline">
+                Manage Assets
+            </a>
+        </li>
+        <li><span class="mx-2">/</span></li>
+        <li class="text-gray-700 font-medium">{{ title }}</li>
+    </ol>
+</nav>
+
+<!-- Page Heading -->
+<h2 class="text-3xl font-bold text-nhc-blue mb-8">{{ title }}</h2>
+
+<!-- Form Container -->
+<form method="POST" class="bg-white p-2 rounded-2xl shadow-lg max-w-6xl mx-auto">
+    {% csrf_token %}
+
+    <!-- Grid for Inputs: 3 per row on large screens -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for field in form %}
+        <div class="flex flex-col">
+            <label for="{{ field.id_for_label }}" class="font-semibold text-gray-700 mb-2">
+                {{ field.label }}
+            </label>
+
+            {# Apply Tailwind styling to both text inputs and dropdowns #}
+            {{ field|add_class:"border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full transition duration-200" }}
+
+            {% if field.help_text %}
+            <small class="text-gray-500 mt-1">{{ field.help_text }}</small>
+            {% endif %}
+
+            {% for error in field.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Form Actions: Right-aligned on large screens -->
+    <div class="mt-8 flex flex-wrap justify-end gap-4">
+        <button type="submit" 
+                class="bg-green-600 text-white px-6 py-2 rounded-xl hover:bg-green-700 transition shadow-md hover:shadow-lg">
+            Save
+        </button>
+        <a href="{% url 'assets:staff_manage_assets' %}" 
+           class="bg-gray-200 text-gray-700 px-6 py-2 rounded-xl hover:bg-gray-300 transition shadow-md hover:shadow-lg">
+            Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}

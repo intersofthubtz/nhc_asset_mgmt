@@ -1,0 +1,58 @@
+:root {
+    --nhc-dark-blue: #0F5391;
+    --nhc-teal: #208DCE;
+    --nhc-yellow: #FABA00;
+    --nhc-black: #000000;
+}
+
+/* Header Bar */
+#header {
+    background-color: var(--nhc-dark-blue);
+    border-bottom: 4px solid var(--nhc-yellow);
+    padding: 15px 20px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Site Branding */
+#site-name a {
+    color: var(--nhc-yellow) !important;
+    font-size: 26px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* User tools (Welcome + Links) */
+#user-tools {
+    color: var(--nhc-yellow) !important;
+    font-weight: 600;
+    font-size: 14px;
+    transition: opacity 0.3s;
+}
+
+#user-tools a {
+    color: var(--nhc-teal) !important;
+    margin-left: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+#user-tools a:hover {
+    background: var(--nhc-teal);
+    color: var(--nhc-black) !important;
+}
+
+/* Theme Toggle Styling */
+.theme-toggle {
+    background: var(--nhc-yellow) !important;
+    color: var(--nhc-black) !important;
+    border-radius: 6px;
+    margin-left: 12px;
+    font-weight: 700;
+    padding: 6px 8px;
+}
