@@ -1,291 +1,225 @@
 {% extends "accounts/admin_dashboard.html" %}
 {% block admin_content %}
-<h2 class="text-2xl font-bold text-nhc-blue mb-3">Manage Returned Assets</h2>
-<p class="text-gray-700 mb-6">Review assets returned by users and record their condition.</p>
 
-<!-- Search + Filters -->
-<form method="get" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 w-full">
+<div class="w-full max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
 
-  <!-- Search Input -->
-  <input
-    type="text"
-    name="search"
-    value="{{ search_query }}"
-    placeholder="Search by user, asset, model, or remarks..."
-    class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nhc-yellow"
-    oninput="this.form.submit()"
-  />
-
-  <!-- Condition -->
-  <div class="flex items-center gap-2">
-    <select
-      name="condition"
-      class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-nhc-yellow"
-      onchange="this.form.submit()"
-    >
-        <option value="all" {% if condition_filter == "all" %}selected{% endif %}>All</option>
-        <option value="good" {% if condition_filter == "good" %}selected{% endif %}>Good</option>
-        <option value="damaged" {% if condition_filter == "damaged" %}selected{% endif %}>Damaged</option>
-        <option value="lost" {% if condition_filter == "lost" %}selected{% endif %}>Lost</option>
-        <option value="not returned" {% if condition_filter == "not returned" %}selected{% endif %}>Not Returned</option>
-    </select>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-2xl sm:text-3xl font-bold text-nhc-blue tracking-tight">Manage Asset Returns</h2>
   </div>
 
-</form>
+  <!-- Search & Filters -->
+  <form id="searchForm" method="get"
+        class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5 bg-white p-4 rounded-lg shadow-md border border-gray-100">
 
-<!-- Returned Assets Table -->
-<div class="overflow-x-auto bg-white shadow-md rounded-none">
-  <table class="min-w-full divide-y divide-gray-200 text-sm" id="returnsTable">
-    <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
-      <tr>
-        <th class="py-3 px-4 text-left">User</th>
-        <th class="py-3 px-4 text-left">Asset</th>
-        <th class="py-3 px-4 text-left">Model</th>
-        <th class="py-3 px-4 text-left">Expected Return</th>
-        <th class="py-3 px-4 text-left">Condition</th>
-        <th class="py-3 px-4 text-left">Returned Date</th>
-        <th class="py-3 px-4 text-left">Remarks</th>
-        <th class="py-3 px-4 text-left">Received By</th>
-        <th class="py-3 px-4 text-left">Action</th>
-      </tr>
-    </thead>
+    <div class="w-full sm:w-1/2">
+      <input type="text" name="search" value="{{ search_query }}"
+             placeholder="Search by user, asset, serial..."
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nhc-blue shadow-sm">
+    </div>
 
-    <tbody class="divide-y divide-gray-100">
-      {% for req in page_obj %}
-      {% with return=req.returns.first %}
-      <tr class="hover:bg-gray-50 transition">
-        <td class="py-3 px-4 font-semibold text-nhc-blue">{{ req.user.username }}</td>
-        <td class="py-3 px-4">{{ req.asset.asset_name }}</td>
-        <td class="py-3 px-4">{{ req.asset.model|default:"N/A" }}</td>
-        <td class="py-3 px-4">{{ req.return_date|date:"M d, Y" }}</td>
+    <select name="condition"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nhc-blue w-full sm:w-40">
+      <option value="all" {% if condition_filter == 'all' %}selected{% endif %}>All Conditions</option>
+      <option value="good" {% if condition_filter == 'good' %}selected{% endif %}>Good</option>
+      <option value="fair" {% if condition_filter == 'fair' %}selected{% endif %}>Fair</option>
+      <option value="damaged" {% if condition_filter == 'damaged' %}selected{% endif %}>Damaged</option>
+      <option value="lost" {% if condition_filter == 'lost' %}selected{% endif %}>Lost</option>
+    </select>
+  </form>
 
-        <!-- Condition -->
-        <td class="py-3 px-4">
-          {% if return %}
-            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded">
-              {{ return.condition_on_return|capfirst }}
+  <!-- Table -->
+  <div class="overflow-x-auto bg-white shadow-md rounded-none">
+    <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+      <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
+        <tr>
+          <th class="py-3 px-4 text-left">User</th>
+          <th class="py-3 px-4 text-left">Asset Category</th>
+          <th class="py-3 px-4 text-left">Assigned Asset</th>
+          <th class="py-3 px-4 text-left">Returned Date</th>
+          <th class="py-3 px-4 text-left">Condition</th>
+          <th class="py-3 px-4 text-left">Received By</th>
+          <th class="py-3 px-4 text-center">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-100">
+        {% for ret in page_obj %}
+        <tr class="hover:bg-gray-50 transition duration-150">
+
+          <td class="py-3 px-4 font-semibold text-nhc-blue">
+            {{ ret.borrow_request.user.username }}
+          </td>
+
+          <td class="py-3 px-4">
+            {{ ret.borrow_request.asset_category }}
+          </td>
+
+          <td class="py-3 px-4">
+            {% if ret.borrow_request.assigned_asset %}
+              <div class="font-semibold text-nhc-blue">
+                {{ ret.borrow_request.assigned_asset.model }}
+              </div>
+              <div class="text-gray-500 text-xs">
+                Serial: {{ ret.borrow_request.assigned_asset.serial_number }}
+              </div>
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
+
+          <td class="py-3 px-4">
+            {{ ret.returned_date|date:"M d, Y H:i" }}
+          </td>
+
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
+              {% if ret.condition_on_return == 'good' %}bg-green-100 text-green-700
+              {% elif ret.condition_on_return == 'fair' %}bg-yellow-100 text-yellow-700
+              {% elif ret.condition_on_return == 'damaged' %}bg-red-100 text-red-700
+              {% elif ret.condition_on_return == 'lost' %}bg-gray-300 text-gray-700{% endif %}">
+              {{ ret.get_condition_on_return_display }}
             </span>
-          {% else %}
-            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-500 rounded">Not Returned</span>
-          {% endif %}
-        </td>
+          </td>
 
-        <!-- Returned Date -->
-        <td class="py-3 px-4">
-          {% if return %}
-            {{ return.returned_date|date:"M d, Y" }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
+          <td class="py-3 px-4">
+            {{ ret.received_by.username|default:"—" }}
+          </td>
 
-        <!-- Remarks -->
-        <td class="py-3 px-4">
-          {% if return %}
-            {{ return.remarks|default:"-" }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
+          <!-- ACTIONS -->
+          <td class="py-3 px-4 flex justify-center gap-4">
 
-        <!-- Received By -->
-        <td class="py-3 px-4">
-          {% if return %}
-            {{ return.received_by.username }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
+            <!-- View Return Details -->
+            <a href="{% url 'requests:admin_return_detail' ret.pk %}"
+               class="text-blue-600 hover:text-blue-900" title="View Details">
+              <i class="fas fa-eye"></i>
+            </a>
 
-        <!-- Action Button -->
-        <td class="py-3 px-4">
-          {% if not return %}
-            <button
-              type="button"
-              class="px-3 py-1 bg-nhc-blue text-white rounded-md text-sm mark-return-btn"
-              data-req-id="{{ req.id }}"
-              data-user="{{ req.user.username }}"
-              data-asset="{{ req.asset.asset_name }}"
-            >
-              Mark Returned
-            </button>
-          {% else %}
-            <span class="text-gray-500 text-sm">Returned</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endwith %}
-      {% empty %}
-      <tr>
-        <td colspan="8" class="text-center text-gray-500 py-4">No results found.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            {% if not ret.returned_date %}
+              <!-- Mark as Returned ONLY if not returned -->
+              <button onclick="openReturnModal('{{ ret.borrow_request.pk }}')"
+                 class="text-green-600 hover:text-green-900" title="Mark as Fully Returned">
+                <i class="fas fa-check-circle"></i>
+              </button>
+            {% else %}
+              <!-- Already returned badge -->
+              <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                ✔ Returned
+              </span>
+            {% endif %}
+          </td>
+
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="7" class="py-8 text-center text-gray-500">No returned assets found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <nav class="flex justify-center items-center mt-6 gap-2 text-sm sm:text-base">
+
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&condition={{ condition_filter }}"
+         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">Previous</a>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">Previous</span>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+        <span class="px-4 py-2 bg-nhc-yellow text-nhc-black rounded-md font-semibold shadow">{{ num }}</span>
+      {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+        <a href="?page={{ num }}&search={{ search_query }}&condition={{ condition_filter }}"
+           class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">
+          {{ num }}
+        </a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&condition={{ condition_filter }}"
+         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black transition">Next</a>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">Next</span>
+    {% endif %}
+  </nav>
+  {% endif %}
 </div>
 
-<!-- PAGINATION -->
-{% if page_obj.has_other_pages %}
-<nav class="flex items-center justify-center mt-6 space-x-1">
+<!-- ========================== -->
+<!-- RETURN MODAL -->
+<!-- ========================== -->
+<div id="returnModal"
+     class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm hidden justify-center items-center z-50">
 
-  {% if page_obj.has_previous %}
-  <a
-    href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&condition={{ condition_filter }}"
-    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-  >&laquo; Prev</a>
-  {% else %}
-  <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">&laquo; Prev</span>
-  {% endif %}
+  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
 
-  {% for num in page_obj.paginator.page_range %}
-    {% if num == page_obj.number %}
-      <span class="px-3 py-1 bg-nhc-blue text-white rounded">{{ num }}</span>
-    {% else %}
-      <a
-        href="?page={{ num }}&search={{ search_query }}&condition={{ condition_filter }}"
-        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-      >{{ num }}</a>
-    {% endif %}
-  {% endfor %}
+    <h2 class="text-xl font-bold mb-4 text-nhc-blue">Mark Asset as Returned</h2>
 
-  {% if page_obj.has_next %}
-  <a
-    href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&condition={{ condition_filter }}"
-    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-  >Next &raquo;</a>
-  {% else %}
-  <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded">Next &raquo;</span>
-  {% endif %}
-
-</nav>
-{% endif %}
-
-
-<!-- (⚠ Keep your modal + JS for marking return - unchanged) -->
-<div id="returnModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 mx-4">
-    <h2 class="text-xl font-bold mb-4 text-center text-nhc-blue">Mark Asset as Returned</h2>
-
-    <form id="returnForm" method="POST" class="space-y-4">
+    <form id="returnForm" method="POST">
       {% csrf_token %}
-      <input type="hidden" name="req_id" id="modalReqId">
 
-      <div>
-        <label class="block text-sm font-medium mb-1">User</label>
-        <input type="text" id="modalUser" class="w-full border px-3 py-2 rounded bg-gray-100" readonly>
-      </div>
+      <label class="block mb-2 font-semibold">Return Date</label>
+      <input type="datetime-local" name="returned_date"
+             class="w-full border px-3 py-2 rounded mb-4" required>
 
-      <div>
-        <label class="block text-sm font-medium mb-1">Asset</label>
-        <input type="text" id="modalAsset" class="w-full border px-3 py-2 rounded bg-gray-100" readonly>
-      </div>
+      <label class="block mb-2 font-semibold">Condition</label>
+      <select name="condition_on_return"
+              class="w-full border px-3 py-2 rounded mb-4" required>
+        <option value="good">Good</option>
+        <option value="fair">Fair</option>
+        <option value="damaged">Damaged</option>
+        <option value="lost">Lost</option>
+      </select>
 
-      <div>
-        <label class="block text-sm font-medium mb-1">Condition</label>
-        <select name="condition" class="w-full border px-3 py-2 rounded" required>
-          <option value="good">Good</option>
-          <option value="damaged">Damaged</option>
-          <option value="lost">Lost</option>
-        </select>
-      </div>
+      <label class="block mb-2 font-semibold">Remarks</label>
+      <textarea name="remarks" class="w-full border px-3 py-2 rounded mb-4"
+                placeholder="Enter remarks (optional)"></textarea>
 
-      <div>
-        <label class="block text-sm font-medium mb-1">Returned Date</label>
-        <input type="date" name="returned_date" value="{{ today|date:'Y-m-d' }}" class="w-full border px-3 py-2 rounded" required>
-      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeReturnModal()"
+                class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
 
-      <div>
-        <label class="block text-sm font-medium mb-1">Remarks</label>
-        <textarea name="remarks" class="w-full border px-3 py-2 rounded" rows="2" placeholder="Enter remarks..."></textarea>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-4">
-        <button type="button" onclick="closeReturnModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-nhc-blue text-white rounded hover:bg-blue-700">Submit</button>
+        <button type="submit"
+                class="px-4 py-2 bg-nhc-blue text-white rounded hover:bg-nhc-yellow hover:text-black">
+          Submit
+        </button>
       </div>
     </form>
   </div>
+
 </div>
 
-
-<!-- ===================== JS ========================= -->
 <script>
-// Open modal
-document.querySelectorAll('.mark-return-btn').forEach(btn => {
-  btn.addEventListener('click', function(){
-    const reqId = this.dataset.reqId;
-    const user = this.dataset.user;
-    const asset = this.dataset.asset;
-
-    document.getElementById('modalReqId').value = reqId;
-    document.getElementById('modalUser').value = user;
-    document.getElementById('modalAsset').value = asset;
-
-    document.getElementById('returnModal').classList.remove('hidden');
-    document.getElementById('returnModal').classList.add('flex');
-  });
-});
-
-// Close modal
-function closeReturnModal(){
-  const modal = document.getElementById('returnModal');
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
+function openReturnModal(reqId) {
+    const form = document.getElementById("returnForm");
+    form.action = "/requests/admin/mark-returned/" + reqId + "/";  
+    document.getElementById("returnModal").classList.remove("hidden");
 }
 
-// Feedback toast helper
-function showFeedback(message, type="success"){
-  let existing = document.getElementById("feedbackMessage");
-  if(existing) existing.remove();
-
-  const div = document.createElement("div");
-  div.id = "feedbackMessage";
-  div.innerText = message;
-  div.className = `
-    fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-white
-    ${type === "success" ? "bg-green-500" : "bg-red-500"}
-  `;
-  document.body.appendChild(div);
-
-  setTimeout(() => div.remove(), 3000);
+function closeReturnModal() {
+    document.getElementById("returnModal").classList.add("hidden");
 }
 
-// AJAX submit
-document.getElementById("returnForm").addEventListener("submit", function(e){
-  e.preventDefault();
-  const form = e.target;
-  const reqId = document.getElementById('modalReqId').value;
-  const formData = new FormData(form);
+const searchForm = document.getElementById('searchForm');
+const searchInput = document.querySelector('input[name="search"]');
+const conditionSelect = document.querySelector('select[name="condition"]');
 
-  fetch("{% url 'requests:admin_mark_returned' 0 %}".replace("0", reqId), {
-    method: 'POST',
-    headers: {'X-Requested-With': 'XMLHttpRequest'},
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-    if(data.success){
-      const row = document.querySelector(`button[data-req-id='${reqId}']`).closest("tr");
+let typingTimer;
+const delay = 500;
 
-      // Update table row
-      row.querySelector("td:nth-child(5)").innerHTML =
-        `<span class='inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded'>${data.condition}</span>`;
-      row.querySelector("td:nth-child(6)").innerText = data.returned_date;
-      row.querySelector("td:nth-child(7)").innerText = data.remarks || "-";
-      row.querySelector("td:nth-child(8)").innerHTML = '<span class="text-gray-500 text-sm">Returned</span>';
-
-      // Show feedback toast
-      showFeedback("Asset marked as returned successfully!", "success");
-
-      closeReturnModal();
-    } else if(data.error){
-      showFeedback(data.error, "error");
-    }
-  })
-  .catch(err => {
-    showFeedback("An unexpected error occurred.", "error");
-  });
+searchInput.addEventListener('keyup', () => {
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => searchForm.submit(), delay);
 });
+
+conditionSelect.addEventListener('change', () => searchForm.submit());
 </script>
 
 {% endblock %}

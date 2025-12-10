@@ -52,7 +52,7 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
       <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
         <tr>
-          <th class="py-3 px-4 text-left  uppercase tracking-wider">Asset Name</th>
+          <th class="py-3 px-4 text-left  uppercase tracking-wider">Asset Category</th>
           <th class="py-3 px-4 text-left uppercase tracking-wider">Model</th>
           <th class="py-3 px-4 text-left  uppercase tracking-wider">Serial</th>
           <th class="py-3 px-4 text-left  uppercase tracking-wider">Barcode</th>
@@ -64,7 +64,7 @@
       <tbody class="divide-y divide-gray-100">
         {% for asset in page_obj %}
         <tr class="hover:bg-gray-50 transition duration-150">
-          <td class="py-3 px-4 font-semibold text-nhc-blue">{{ asset.asset_name }}</td>
+          <td class="py-3 px-4 font-semibold text-nhc-blue">{{ asset.asset_category }}</td>
           <td class="py-3 px-4">{{ asset.model|default:"—" }}</td>
           <td class="py-3 px-4">{{ asset.serial_number|default:"—" }}</td>
           <td class="py-3 px-4">{{ asset.barcode|default:"—" }}</td>

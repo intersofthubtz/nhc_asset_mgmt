@@ -14,7 +14,7 @@
 
       <!-- Dashboard -->
       <a
-        href="{% url 'admin_dashboard' %}"
+        href="{% url 'accounts:admin_dashboard' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/dashboard/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -58,7 +58,7 @@
 
       <!-- Report -->
       <a
-        href="{% url 'admin_report' %}"
+        href="{% url 'accounts:admin_report' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/admin/report/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -110,42 +110,70 @@
       </div>
     </div>
 
-    <!-- Recent Requests Table -->
-    <div class="bg-white shadow-md rounded-xl p-4">
-      <h3 class="text-lg font-semibold text-nhc-blue mb-3">Recent Requests</h3>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
-          <thead class="bg-gray-100 uppercase font-semibold">
-            <tr>
-              <th class="px-3 py-2 text-left">User</th>
-              <th class="px-3 py-2 text-left">Asset</th>
-              <th class="px-3 py-2 text-left">Status</th>
-              <th class="px-3 py-2 text-left">Request Date</th>
-              <th class="px-3 py-2 text-left">Return Date</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for req in recent_requests %}
-            <tr class="hover:bg-gray-50 transition">
-              <td class="px-3 py-2 font-medium">{{ req.user.username }}</td>
-              <td class="px-3 py-2">{{ req.asset.asset_name }} ({{ req.asset.model }})</td>
-              <td class="px-3 py-2">
-                <span class="px-2 py-1 rounded-full text-xs {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700{% elif req.status == 'approved' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
-                  {{ req.status|capfirst }}
-                </span>
-              </td>
-              <td class="px-3 py-2">{{ req.request_date|date:"M d, Y" }}</td>
-              <td class="px-3 py-2">{{ req.return_date|date:"M d, Y" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" class="text-center py-4 text-gray-500">No recent requests</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+ <!-- Recent Requests Table -->
+<div class="bg-white shadow-md rounded-xl p-4">
+  <h3 class="text-lg font-semibold text-nhc-blue mb-3">Recent Requests</h3>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-100 uppercase font-semibold">
+        <tr>
+          <th class="px-3 py-2 text-left">User</th>
+          <th class="px-3 py-2 text-left">Asset Category</th>
+          <th class="px-3 py-2 text-left">Status</th>
+          <th class="px-3 py-2 text-left">Request Date</th>
+          <th class="px-3 py-2 text-left">Return Date</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-100">
+        {% for req in recent_requests %}
+        <tr class="hover:bg-gray-50 transition">
+
+          <!-- User -->
+          <td class="px-3 py-2 font-medium">{{ req.user.username }}</td>
+
+          <!-- Asset Display -->
+          <td class="px-3 py-2">
+            {% if req.assigned_asset %}
+              {{ req.assigned_asset.asset_name }}
+              {% if req.assigned_asset.model %}
+                ({{ req.assigned_asset.model }})
+              {% endif %}
+            {% else %}
+              {{ req.asset_category }}
+            {% endif %}
+          </td>
+
+          <!-- Status -->
+          <td class="px-3 py-2">
+            <span class="px-2 py-1 rounded-full text-xs
+              {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700
+              {% elif req.status == 'approved' %}bg-green-100 text-green-700
+              {% else %}bg-red-100 text-red-700{% endif %}
+            ">
+              {{ req.status|capfirst }}
+            </span>
+          </td>
+
+          <!-- Dates -->
+          <td class="px-3 py-2">{{ req.request_date|date:"M d, Y" }}</td>
+          <td class="px-3 py-2">{{ req.return_date|date:"M d, Y" }}</td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center py-4 text-gray-500">
+            No recent requests
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+  </div>
+</div>
+
     {% endblock %}
   </div>
 </div>

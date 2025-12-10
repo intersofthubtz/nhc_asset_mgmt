@@ -28,7 +28,7 @@ def admin_manage_assets(request):
 
     if search_query:
         assets = assets.filter(
-            Q(asset_name__icontains=search_query) |
+            Q(asset_category__icontains=search_query) |
             Q(model__icontains=search_query) |
             Q(serial_number__icontains=search_query) |
             Q(barcode__icontains=search_query)
@@ -109,7 +109,7 @@ def staff_manage_assets(request):
 
     if search_query:
         assets = assets.filter(
-            Q(asset_name__icontains=search_query) |
+            Q(asset_category__icontains=search_query) |
             Q(model__icontains=search_query) |
             Q(serial_number__icontains=search_query) |
             Q(barcode__icontains=search_query)

@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-{% load static %}
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block content %}
 <div
   class="flex flex-col md:flex-row w-full max-w-7xl mx-auto mt-6 gap-6 px-4 relative"
 >
@@ -11,10 +9,9 @@
   >
     <h2 class="text-xl font-bold text-nhc-blue mb-6">STAFF Menu</h2>
     <nav class="flex flex-col space-y-3">
-
       <!-- Dashboard -->
       <a
-        href="{% url 'staff_dashboard' %}"
+        href="{% url 'accounts:staff_dashboard' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff/dashboard/' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
       >
         <svg
@@ -25,7 +22,11 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M4 10v10h16V10" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 12l9-9 9 9M4 10v10h16V10"
+          />
         </svg>
         Dashboard
       </a>
@@ -43,7 +44,11 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M4 6h16M4 10h16M4 14h10M4 18h10"
+          />
         </svg>
         Manage Assets
       </a>
@@ -61,7 +66,11 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
         </svg>
         Manage Requests
       </a>
@@ -79,14 +88,18 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h7V3l10 9-10 9v-7H3v-4z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 10h7V3l10 9-10 9v-7H3v-4z"
+          />
         </svg>
         Returned Assets
       </a>
 
       <!-- Report -->
       <a
-        href="{% url 'staff_report' %}"
+        href="{% url 'accounts:staff_report' %}"
         class="flex items-center gap-3 px-3 py-2 rounded-md font-medium {% if request.path == '/accounts/staff//' %}bg-nhc-lightgray text-nhc-blue{% else %}text-nhc-black hover:text-nhc-blue hover:bg-nhc-lightgray{% endif %}"
       >
         <svg
@@ -97,7 +110,11 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6a2 2 0 012-2h8M9 17v4m0-4H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 17v-6a2 2 0 012-2h8M9 17v4m0-4H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3z"
+          />
         </svg>
         Report
       </a>
@@ -115,24 +132,40 @@
 
     <!-- Quick Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="bg-gradient-to-b from-blue-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-blue hover:shadow-lg transition">
+      <div
+        class="bg-gradient-to-b from-blue-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-blue hover:shadow-lg transition"
+      >
         <p class="text-sm font-medium text-gray-500">Total Assets</p>
-        <h3 class="text-2xl font-bold text-nhc-blue mt-1">{{ total_assets }}</h3>
+        <h3 class="text-2xl font-bold text-nhc-blue mt-1">
+          {{ total_assets }}
+        </h3>
       </div>
 
-      <div class="bg-gradient-to-b from-yellow-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-yellow hover:shadow-lg transition">
+      <div
+        class="bg-gradient-to-b from-yellow-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-yellow hover:shadow-lg transition"
+      >
         <p class="text-sm font-medium text-gray-500">Pending Requests</p>
-        <h3 class="text-2xl font-bold text-nhc-yellow mt-1">{{ pending_requests }}</h3>
+        <h3 class="text-2xl font-bold text-nhc-yellow mt-1">
+          {{ pending_requests }}
+        </h3>
       </div>
 
-      <div class="bg-gradient-to-b from-green-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-green hover:shadow-lg transition">
+      <div
+        class="bg-gradient-to-b from-green-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-green hover:shadow-lg transition"
+      >
         <p class="text-sm font-medium text-gray-500">Approved Assets</p>
-        <h3 class="text-2xl font-bold text-nhc-green mt-1">{{ approved_assets }}</h3>
+        <h3 class="text-2xl font-bold text-nhc-green mt-1">
+          {{ approved_assets }}
+        </h3>
       </div>
 
-      <div class="bg-gradient-to-b from-purple-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-purple hover:shadow-lg transition">
+      <div
+        class="bg-gradient-to-b from-purple-50 to-white p-5 rounded-xl shadow-md border-t-4 border-nhc-purple hover:shadow-lg transition"
+      >
         <p class="text-sm font-medium text-gray-500">Returned Assets</p>
-        <h3 class="text-2xl font-bold text-nhc-purple mt-1">{{ returned_assets }}</h3>
+        <h3 class="text-2xl font-bold text-nhc-purple mt-1">
+          {{ returned_assets }}
+        </h3>
       </div>
     </div>
 
@@ -144,7 +177,7 @@
           <thead class="bg-gray-100 uppercase font-semibold">
             <tr>
               <th class="px-3 py-2 text-left">User</th>
-              <th class="px-3 py-2 text-left">Asset</th>
+              <th class="px-3 py-2 text-left">Asset Category</th>
               <th class="px-3 py-2 text-left">Status</th>
               <th class="px-3 py-2 text-left">Request Date</th>
               <th class="px-3 py-2 text-left">Return Date</th>
@@ -154,8 +187,11 @@
             {% for req in recent_requests %}
             <tr class="hover:bg-gray-50 transition">
               <td class="px-3 py-2 font-medium">{{ req.user.username }}</td>
+              <!-- Asset Display -->
               <td class="px-3 py-2">
-                {{ req.asset.asset_name }} ({{ req.asset.model }})
+                {% if req.assigned_asset %} {{ req.assigned_asset.asset_name }}
+                {% if req.assigned_asset.model %} ({{ req.assigned_asset.model
+                }}) {% endif %} {% else %} {{ req.asset_category }} {% endif %}
               </td>
               <td class="px-3 py-2">
                 <span

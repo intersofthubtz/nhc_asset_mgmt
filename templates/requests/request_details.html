@@ -1,0 +1,178 @@
+{% extends "accounts/staff_dashboard.html" %}
+{% block staff_content %}
+
+<div class="w-full max-w-5xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Breadcrumb / Scrumb -->
+    <nav class="text-sm mb-6 text-gray-600">
+        <ol class="flex items-center space-x-2">
+            <li>
+                <a href="{% url 'requests:staff_manage_requests' %}"
+                   class="text-nhc-blue font-medium hover:underline">
+                    Manage Requests
+                </a>
+            </li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-500 font-semibold">Request Details</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-3xl font-bold text-nhc-blue tracking-tight">
+            Request Details
+        </h2>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-white shadow-md rounded-xl p-8 border border-gray-100">
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+            <!-- Requested By -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-semibold text-gray-600 uppercase">Requested By</p>
+                <p class="mt-1 text-lg font-semibold text-nhc-blue">
+                    {{ req.user.get_full_name|default:req.user.username }}
+                </p>
+            </div>
+
+            <!-- Category -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-semibold text-gray-600 uppercase">Category</p>
+                <p class="mt-1 text-lg text-gray-900">{{ req.asset_category }}</p>
+            </div>
+
+            <!-- Request Date -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-semibold text-gray-600 uppercase">Request Date</p>
+                <p class="mt-1 text-lg text-gray-900">{{ req.request_date }}</p>
+            </div>
+
+            <!-- Return Date -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-semibold text-gray-600 uppercase">Return Date</p>
+                <p class="mt-1 text-lg text-gray-900">
+                    {{ req.return_date|default:"—" }}
+                </p>
+            </div>
+
+            <!-- Assigned Asset -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-semibold text-gray-600 uppercase">Assigned Asset</p>
+
+                {% if req.assigned_asset %}
+                    <p class="mt-1 text-lg font-semibold text-green-700">
+                        {{ req.assigned_asset.model }} ({{ req.assigned_asset.serial_number }})
+                    </p>
+                {% else %}
+                    <p class="mt-1 text-gray-500">Not Assigned</p>
+                {% endif %}
+            </div>
+
+            <!-- Status -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-semibold text-gray-600 uppercase">Status</p>
+
+                {% if req.status == 'pending' %}
+                    <span class="inline-flex px-3 py-1 mt-1 rounded-full font-semibold bg-yellow-100 text-yellow-700">
+                        Pending
+                    </span>
+
+                {% elif req.status == 'approved' %}
+                    <span class="inline-flex px-3 py-1 mt-1 rounded-full font-semibold bg-green-100 text-green-700">
+                        Approved
+                    </span>
+
+                {% elif req.status == 'rejected' %}
+                    <span class="inline-flex px-3 py-1 mt-1 rounded-full font-semibold bg-red-100 text-red-700">
+                        Rejected
+                    </span>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Divider -->
+        <hr class="my-8 border-gray-200" />
+
+        <!-- Remarks -->
+        <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
+            <p class="text-sm font-semibold text-gray-700 uppercase">Remarks</p>
+            <p class="mt-2 text-gray-800 whitespace-pre-line leading-relaxed">
+                {{ req.remarks|default:"No remarks provided." }}
+            </p>
+        </div>
+
+        <!-- Divider -->
+        <hr class="my-8 border-gray-200" />
+
+        {% if req.status == "pending" %}
+        <!-- Actions for Pending Requests -->
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Approve or Reject Request</h3>
+
+        <!-- Asset Selector -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Assign Asset (optional)
+            </label>
+
+            <select name="assigned_asset"
+                    onchange="window.location.href='{{ request.path }}?assign=' + this.value"
+                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-nhc-blue focus:border-nhc-blue">
+                <option value="">-- Select Asset --</option>
+
+                {% for asset in assets %}
+                    <option value="{{ asset.id }}">
+                        {{ asset.asset_category }} {{ asset.model }} ({{ asset.serial_number }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Approve Form -->
+        <form method="POST"
+              action="{% url 'requests:update_request_status' req.pk 'approve' %}"
+              class="mb-6">
+            {% csrf_token %}
+
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Remarks (optional)
+            </label>
+
+            <textarea name="remarks" rows="3"
+                      class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-nhc-blue focus:border-nhc-blue"></textarea>
+
+            <button type="submit"
+                    class="mt-3 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow">
+                Approve Request
+            </button>
+        </form>
+
+        <!-- Reject Form -->
+        <form method="POST"
+              action="{% url 'requests:update_request_status' req.pk 'reject' %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow">
+                Reject Request
+            </button>
+        </form>
+
+        {% else %}
+
+        <!-- Already Processed -->
+        <div class="mt-8 bg-gray-50 border border-gray-200 p-5 rounded-lg">
+            <p class="font-semibold text-gray-800">
+                This request has already been {{ req.status }}.
+            </p>
+            <p class="text-sm text-gray-600 mt-1">No further actions available.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

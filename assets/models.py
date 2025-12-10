@@ -24,7 +24,7 @@ class Asset(models.Model):
         ('projector', 'Projector'),
     ]
 
-    asset_name = models.CharField(
+    asset_category = models.CharField(
         max_length=50,
         choices=CATEGORY_CHOICES,
         default='laptop'
@@ -36,7 +36,6 @@ class Asset(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     asset_condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='good')
-    purchase_date = models.DateField(blank=True, null=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -46,4 +45,4 @@ class Asset(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.asset_name} ({self.model})"
+        return f"{self.asset_category} ({self.model})"

@@ -1,0 +1,105 @@
+{% extends "accounts/staff_dashboard.html" %}
+{% block staff_content %}
+
+<!-- Breadcrumb / Navigation Path -->
+<nav class="text-sm mb-6 text-gray-600">
+    <ol class="list-reset flex items-center space-x-2">
+        <li>
+            <a href="{% url 'requests:staff_manage_returns' %}" class="text-nhc-blue font-medium hover:underline">
+                Manage Returns
+            </a>
+        </li>
+        <li>/</li>
+        <li class="text-gray-500 font-medium">Return Detail</li>
+    </ol>
+</nav>
+
+<div class="max-w-4xl mx-auto bg-white shadow-md p-8 rounded-xl border border-gray-100">
+
+    <h2 class="text-3xl font-bold mb-6 text-nhc-blue tracking-tight">
+        Asset Return Details
+    </h2>
+
+    <!-- Grid Container -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+        <!-- User -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">User</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.borrow_request.user.username }}</p>
+        </div>
+
+        <!-- Category -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Asset Category</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.borrow_request.asset_category }}</p>
+        </div>
+
+        <!-- Model -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Model</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.borrow_request.assigned_asset.model }}</p>
+        </div>
+
+        <!-- Serial Number -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Serial Number</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.borrow_request.assigned_asset.serial_number }}</p>
+        </div>
+
+        <!-- Approved By -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Approved By</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.borrow_request.approved_by.username|default:"—" }}</p>
+        </div>
+
+        <!-- Expected Return -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Expected Return Date</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.borrow_request.return_date|date:"M d, Y" }}</p>
+        </div>
+
+        <!-- Returned Date -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Returned Date</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.returned_date|date:"M d, Y H:i" }}</p>
+        </div>
+
+        <!-- Condition -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Condition on Return</h3>
+            <p class="mt-1 text-gray-900 font-medium">
+                {{ ret.get_condition_on_return_display }}
+            </p>
+        </div>
+
+        <!-- Received By -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="font-semibold text-gray-700 text-sm">Received By</h3>
+            <p class="mt-1 text-gray-900 font-medium">{{ ret.received_by.username|default:"—" }}</p>
+        </div>
+
+    </div>
+
+    <!-- Divider -->
+    <hr class="my-8 border-gray-200" />
+
+    <!-- Request Remarks -->
+    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
+        <h3 class="font-semibold text-gray-700 text-sm">Request Remarks</h3>
+        <p class="mt-2 text-gray-900 leading-relaxed">
+            {{ ret.borrow_request.remarks|default:"—" }}
+        </p>
+    </div>
+
+    <!-- Return Remarks -->
+    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mt-6">
+        <h3 class="font-semibold text-gray-700 text-sm">Return Remarks</h3>
+        <p class="mt-2 text-gray-900 leading-relaxed">
+            {{ ret.remarks|default:"—" }}
+        </p>
+    </div>
+
+</div>
+
+{% endblock %}

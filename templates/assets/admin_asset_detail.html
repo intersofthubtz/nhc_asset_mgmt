@@ -1,68 +1,127 @@
 {% extends "accounts/admin_dashboard.html" %}
-
 {% block admin_content %}
 
-<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-2xl p-8 mt-8 border border-gray-100">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-        <div>
+<div class="max-w-4xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+
+    <!-- Breadcrumb / Navigation Scrumb -->
+    <nav class="text-sm mb-6 text-gray-600">
+        <ol class="flex items-center space-x-2">
+            <li>
+                <a href="{% url 'assets:admin_manage_assets' %}"
+                   class="text-nhc-blue hover:underline font-medium">
+                    Manage Assets
+                </a>
+            </li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-500 font-semibold">Asset Details</li>
+        </ol>
+    </nav>
+
+    <!-- Main Card -->
+    <div class="bg-white shadow-lg rounded-2xl p-8 border border-gray-100">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
             <h2 class="text-3xl text-nhc-blue tracking-tight">
-                Asset Name: <strong>{{ asset.asset_name }}</strong>
+                Asset Category: <span class="font-semibold uppercase">{{ asset.asset_category }}</span>
             </h2>
+
+            <!-- Status Badge -->
+            <span class="px-3 py-1 text-sm font-semibold rounded-full
+                {% if asset.status == 'active' %} bg-green-100 text-green-700
+                {% elif asset.status == 'inactive' %} bg-red-100 text-red-700
+                {% elif asset.status == 'returned' %} bg-blue-100 text-blue-700
+                {% else %} bg-gray-100 text-gray-700 {% endif %}
+            ">
+                {{ asset.status|capfirst }}
+            </span>
         </div>
 
-        <span class="px-3 py-1 text-sm rounded-full 
-            {% if asset.status == 'active' %}bg-green-100 text-green-700
-            {% elif asset.status == 'inactive' %}bg-red-100 text-red-700
-            {% else %}bg-gray-100 text-gray-700{% endif %}">
-            {{ asset.status|capfirst }}
-        </span>
-    </div>
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 text-gray-700 leading-relaxed">
 
-    <!-- Asset Info Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-gray-700">
-        <p><span class="font-semibold text-gray-900">Model:</span> {{ asset.model }}</p>
-        <p><span class="font-semibold text-gray-900">Serial Number:</span> {{ asset.serial_number }}</p>
-        <p><span class="font-semibold text-gray-900">Barcode:</span> {{ asset.barcode }}</p>
-        <p><span class="font-semibold text-gray-900">Condition:</span> {{ asset.asset_condition|capfirst }}</p>
-        <p class="md:col-span-2"><span class="font-semibold text-gray-900">Specification:</span> {{ asset.specification }}</p>
-        <p class="md:col-span-2"><span class="font-semibold text-gray-900">Description:</span> {{ asset.description }}</p>
-        <p><span class="font-semibold text-gray-900">Purchase Date:</span> {{ asset.purchase_date }}</p>
-        <p><span class="font-semibold text-gray-900">Added By:</span> {{ asset.created_by }}</p>
-        <p><span class="font-semibold text-gray-900">Created At:</span> {{ asset.created_at }}</p>
-    </div>
+            <p>
+                <span class="font-semibold text-gray-900">Model:</span><br>
+                {{ asset.model }}
+            </p>
 
-    <!-- Divider -->
-    <hr class="my-6 border-gray-200">
+            <p>
+                <span class="font-semibold text-gray-900">Serial Number:</span><br>
+                {{ asset.serial_number }}
+            </p>
 
-    <!-- Action Buttons -->
-    <div class="flex flex-wrap justify-end gap-3">
-        <a href="{% url 'assets:admin_edit_asset' asset.id %}" 
-           class="inline-flex items-center gap-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M11 5h2m-1 1v12m6 0H6a2 2 0 01-2-2V8a2 2 0 012-2h3l2-2h2l2 2h3a2 2 0 012 2v8a2 2 0 01-2 2z" />
-            </svg>
-            Edit
-        </a>
+            <p>
+                <span class="font-semibold text-gray-900">Barcode:</span><br>
+                {{ asset.barcode }}
+            </p>
 
-        <a href="{% url 'assets:admin_delete_asset' asset.id %}" 
-           class="inline-flex items-center gap-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 3h6a1 1 0 011 1v1H8V4a1 1 0 011-1z" />
-            </svg>
-            Delete
-        </a>
+            <p>
+                <span class="font-semibold text-gray-900">Condition:</span><br>
+                {{ asset.asset_condition|capfirst }}
+            </p>
 
-        <a href="{% url 'assets:admin_manage_assets' %}" 
-           class="inline-flex items-center gap-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-        </a>
+            <p class="md:col-span-2">
+                <span class="font-semibold text-gray-900">Specification:</span><br>
+                {{ asset.specification }}
+            </p>
+
+            <p class="md:col-span-2">
+                <span class="font-semibold text-gray-900">Description:</span><br>
+                {{ asset.description }}
+            </p>
+
+            <p>
+                <span class="font-semibold text-gray-900">Added By:</span><br>
+                {{ asset.created_by }}
+            </p>
+
+            <p>
+                <span class="font-semibold text-gray-900">Created At:</span><br>
+                {{ asset.created_at }}
+            </p>
+
+        </div>
+
+        <!-- Divider -->
+        <hr class="my-8 border-gray-200">
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap justify-end gap-3">
+
+            <!-- Edit Button -->
+            <a href="{% url 'assets:admin_edit_asset' asset.id %}"
+               class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5h2m-1 1v12m6 0H6a2 2 0 01-2-2V8a2 2 0 012-2h3l2-2h2l2 2h3a2 2 0 012 2v8a2 2 0 01-2 2z" />
+                </svg>
+                Edit
+            </a>
+
+            <!-- Delete Button -->
+            <a href="{% url 'assets:admin_delete_asset' asset.id %}"
+               class="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 3h6a1 1 0 011 1v1H8V4a1 1 0 011-1z" />
+                </svg>
+                Delete
+            </a>
+
+            <!-- Back Button -->
+            <a href="{% url 'assets:admin_manage_assets' %}"
+               class="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+            </a>
+
+        </div>
     </div>
 </div>
 

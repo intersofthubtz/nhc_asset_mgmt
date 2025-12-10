@@ -2,8 +2,8 @@ from django import forms
 from .models import Asset
 
 class AssetForm(forms.ModelForm):
-    asset_name = forms.ChoiceField(
-        choices=[('', 'Select Asset Name')] + Asset.CATEGORY_CHOICES,
+    asset_category = forms.ChoiceField(
+        choices=[('', 'Select Asset Category')] + Asset.CATEGORY_CHOICES,
         required=True,
         widget=forms.Select(attrs={'class': 'border border-gray-300 rounded-lg px-4 py-2 w-full'})
     )
@@ -32,10 +32,6 @@ class AssetForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'Enter description'})
     )
-    purchase_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'placeholder': 'Select purchase date'})
-    )
     status = forms.ChoiceField(
         choices=[('', 'Select Status')] + Asset.STATUS_CHOICES,
         required=True,
@@ -50,6 +46,6 @@ class AssetForm(forms.ModelForm):
     class Meta:
         model = Asset
         fields = [
-            'asset_name', 'model', 'serial_number', 'barcode', 'specification',
-            'description', 'status', 'asset_condition', 'purchase_date'
+            'asset_category', 'model', 'serial_number', 'barcode', 'specification',
+            'description', 'status', 'asset_condition'
         ]

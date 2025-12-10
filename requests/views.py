@@ -5,6 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from assets.models import Asset
+from requests.forms import AssetRequestForm
 from .models import AssetRequest, AssetReturn
 from django.urls import reverse
 from django.db.models import OuterRef, Subquery
@@ -25,14 +26,16 @@ def admin_manage_requests(request):
     status_filter = request.GET.get('status', 'all')
 
     # Base queryset
-    requests_qs = AssetRequest.objects.select_related('user', 'asset')
+    requests_qs = AssetRequest.objects.select_related('user', 'assigned_asset')
 
     # Apply search across username, asset name, and status
     if search_query:
         requests_qs = requests_qs.filter(
             Q(user__username__icontains=search_query) |
-            Q(asset__asset_name__icontains=search_query) |
-            Q(status__icontains=search_query)
+            Q(asset_category__icontains=search_query) |
+            Q(status__icontains=search_query) |
+            Q(assigned_asset__model__icontains=search_query) |
+            Q(assigned_asset__serial_number__icontains=search_query)
         )
 
     # Apply status filter (skip "all")
@@ -56,40 +59,152 @@ def admin_manage_requests(request):
 
     return render(request, 'requests/admin_manage_requests.html', context)
 
+@login_required
+def admin_request_details(request, pk):
+    # Load request
+    req = get_object_or_404(AssetRequest, pk=pk)
+
+    # ---------------------------------------
+    # Filter ONLY available assets of same category
+    # ---------------------------------------
+    available_assets = Asset.objects.filter(
+        asset_category=req.asset_category,
+        status="available"
+    ).order_by("model")
+
+    # ---------------------------------------
+    # Optional pre-assignment from dropdown
+    # ---------------------------------------
+    assign_id = request.GET.get("assign")
+
+    if assign_id:
+        try:
+            asset = Asset.objects.get(id=assign_id, status="available")
+
+            # Assign the asset to the request
+            req.assigned_asset = asset
+            req.save()
+
+            messages.success(
+                request,
+                f"Asset '{asset.model}' has been pre-assigned to this request."
+            )
+
+            # Correct URL name = get_request_details
+            return redirect("requests:admin_get_request_details", pk=req.pk)
+
+        except Asset.DoesNotExist:
+            messages.error(
+                request,
+                "The selected asset is no longer available."
+            )
+            return redirect("requests:admin_get_request_details", pk=req.pk)
+
+    # ---------------------------------------
+    # Render Page
+    # ---------------------------------------
+    context = {
+        "req": req,
+        "assets": available_assets,
+    }
+
+    return render(request, "requests/admin_request_details.html", context)
+
+
+@login_required
+def assign_asset(request, pk):
+    req = get_object_or_404(AssetRequest, pk=pk)
+
+    # Only allow asset assignment when pending
+    if req.status != "pending":
+        messages.warning(request, "Cannot assign asset. Request is already processed.")
+        return redirect("requests:admin_get_request_details", pk)
+
+    asset_id = request.GET.get("asset_id")
+
+    if not asset_id:
+        messages.error(request, "No asset selected.")
+        return redirect("requests:admin_get_request_details", pk)
+
+    asset = get_object_or_404(Asset, pk=asset_id)
+
+    # Ensure asset category matches request category
+    if asset.asset_category != req.asset_category:
+        messages.error(request, "Asset category does not match request category.")
+        return redirect("requests:admin_get_request_details", pk)
+
+    # Ensure asset is available
+    if asset.status != "available":
+        messages.error(request, "Asset is not available.")
+        return redirect("requests:admin_get_request_details", pk)
+
+    # Assign asset
+    req.assigned_asset = asset
+    req.save()
+
+    messages.success(request, f"Asset {asset.model} assigned successfully.")
+    return redirect("requests:admin_get_request_details", pk)
+
 
 @login_required
 def admin_update_request_status(request, pk, action):
-    """Approve or reject a pending request."""
-    borrow_request = get_object_or_404(AssetRequest, pk=pk)
-    asset = borrow_request.asset
+    req = get_object_or_404(AssetRequest, pk=pk)
 
-    if borrow_request.status != 'pending':
-        messages.error(request, "Only pending requests can be updated.")
-        return redirect('requests:admin_manage_requests')
+    if req.status != "pending":
+        messages.warning(request, "This request has already been processed.")
+        return redirect("requests:admin_get_request_details", req.pk)
 
-    if request.method == 'POST':
-        remarks = request.POST.get('remarks', '')
+    # Save remarks if submitted
+    if request.method == "POST":
+        remarks = request.POST.get("remarks")
+        if remarks:
+            req.remarks = remarks
 
-        if action == 'approve':
-            borrow_request.status = 'approved'
-            asset.status = 'borrowed'
-            messages.success(request, f"Request approved for {borrow_request.user.username}.")
-        elif action == 'reject':
-            borrow_request.status = 'rejected'
-            asset.status = 'borrowed'
-            messages.warning(request, f"Request rejected for {borrow_request.user.username}.")
-        else:
-            messages.error(request, "Invalid action.")
-            return redirect('requests:admin_manage_requests')
+    # APPROVE
+    if action == "approve":
 
-        borrow_request.remarks = remarks
-        borrow_request.approved_by = request.user
-        borrow_request.approval_date = timezone.now()
+        if not req.assigned_asset:
+            messages.error(request, "You must assign an asset before approving.")
+            return redirect("requests:admin_get_request_details", pk)
 
+        req.status = "approved"
+        req.approved_by = request.user
+        req.approval_date = timezone.now()
+
+        # Update asset status
+        asset = req.assigned_asset
+        asset.status = "borrowed"
         asset.save()
-        borrow_request.save()
 
-    return redirect('requests:admin_manage_requests')
+        req.save()
+
+        # ➤ CREATE AssetReturn placeholder
+        AssetReturn.objects.create(
+            borrow_request=req,
+            received_by=None,         # admin will fill later
+            remarks=None,             # empty
+            condition_on_return="good"  # default
+            # returned_date auto created
+        )
+
+        messages.success(request, "Request approved successfully and return record created.")
+        return redirect("requests:admin_get_request_details", pk)
+
+    # REJECT
+    elif action == "reject":
+        req.status = "rejected"
+        req.approved_by = request.user
+        req.approval_date = timezone.now()
+        req.assigned_asset = None
+
+        req.save()
+
+        messages.error(request, "Request rejected.")
+        return redirect("requests:admin_get_request_details", pk)
+
+    else:
+        messages.error(request, "Invalid action.")
+        return redirect("requests:admin_get_request_details", pk)
 
 
 @login_required
@@ -97,143 +212,84 @@ def admin_manage_returns(request):
     search_query = request.GET.get("search", "").strip()
     condition_filter = request.GET.get("condition", "all")
 
-    # Base queryset
-    approved_requests = (
-        AssetRequest.objects.select_related("user", "asset", "approved_by")
-        .filter(status="approved")
-        .prefetch_related("returns")
-        .order_by("-request_date")
+    returns = AssetReturn.objects.select_related(
+        "borrow_request__assigned_asset",
+        "borrow_request__user",
+        "received_by",
     )
 
-    # --- SEARCH ---
+    # Search filter
     if search_query:
-        approved_requests = approved_requests.filter(
-            Q(user__username__icontains=search_query)
-            | Q(asset__asset_name__icontains=search_query)
-            | Q(asset__model__icontains=search_query)
-            | Q(returns__remarks__icontains=search_query)
-        ).distinct()
+        returns = returns.filter(
+            Q(borrow_request__user__username__icontains=search_query) |
+            Q(borrow_request__assigned_asset__model__icontains=search_query) |
+            Q(borrow_request__assigned_asset__serial_number__icontains=search_query)
+        )
 
-    # --- CONDITION FILTER ---
+    # Condition filter
     if condition_filter != "all":
-        if condition_filter == "not returned":
-            approved_requests = approved_requests.filter(returns__isnull=True)
-        else:
-            approved_requests = approved_requests.filter(
-                returns__condition_on_return__iexact=condition_filter
-            )
+        returns = returns.filter(condition_on_return=condition_filter)
 
-    # Pagination
-    paginator = Paginator(approved_requests, 5)
+    paginator = Paginator(returns, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    context = {
+    return render(request, "requests/admin_manage_returns.html", {
         "page_obj": page_obj,
-        "today": timezone.localdate(),
         "search_query": search_query,
         "condition_filter": condition_filter,
-    }
-
-    return render(request, "requests/admin_manage_returns.html", context)
+    })
 
 
-# Mapping condition -> asset status
-CONDITION_STATUS_MAP = {
-    "good": "returned",     
-    "fair": "returned",   
-    "poor": "retired",    
-}   
+
+@login_required
+def admin_return_detail(request, return_id):
+    ret = get_object_or_404(AssetReturn, pk=return_id)
+    return render(request, "requests/admin_return_detail.html", {"ret": ret})
 
 @login_required
 def admin_mark_returned(request, req_id):
-    """
-    Mark an asset as returned.
-    Creates AssetReturn record and updates the linked Asset.
-    """
-    asset_request = get_object_or_404(AssetRequest, pk=req_id)
-    asset = asset_request.asset
+
+    borrow_request = get_object_or_404(AssetRequest, id=req_id)
 
     if request.method == "POST":
-        condition = request.POST.get("condition")  # good, fair, poor
+
         returned_date = request.POST.get("returned_date")
-        remarks = request.POST.get("remarks", "")
+        condition = request.POST.get("condition_on_return")
+        remarks = request.POST.get("remarks")
 
-        if condition not in CONDITION_STATUS_MAP:
-            msg = "Invalid condition selected."
-            messages.error(request, msg)
-            if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                return JsonResponse({"success": False, "error": msg})
-            return redirect("requests:staff_manage_returns")
-
-        # Create AssetReturn
-        asset_return = AssetReturn.objects.create(
-            borrow_request=asset_request,
-            received_by=request.user,
-            condition_on_return=condition,
-            returned_date=parse_date(returned_date),
-            remarks=remarks,
+        # Convert datetime-local to timezone-aware datetime
+        returned_dt = timezone.make_aware(
+            timezone.datetime.fromisoformat(returned_date)
         )
 
-        # Update asset condition + status
-        asset.asset_condition = condition
-        asset.status = CONDITION_STATUS_MAP[condition]
-        asset.save(update_fields=["asset_condition", "status"])
+        # Prevent multiple return records for same request
+        AssetReturn.objects.filter(borrow_request=borrow_request).delete()
 
-        messages.success(request, "Asset return recorded successfully.")
+        # Create/Save return record
+        AssetReturn.objects.create(
+            borrow_request=borrow_request,
+            returned_date=returned_dt,
+            condition_on_return=condition,
+            remarks=remarks,
+            received_by=request.user
+        )
 
-        # AJAX response
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({
-                "success": True,
-                "asset_id": asset.id,
-                "status": asset.status,
-                "condition": asset.asset_condition,
-                "return_id": asset_return.id,
-                "returned_date": asset_return.returned_date.strftime("%Y-%m-%d"),
-                "remarks": asset_return.remarks
-            })
+        # ============================
+        # UPDATE ASSET STATUS HERE
+        # ============================
+        assigned_asset = borrow_request.assigned_asset
+        if assigned_asset:
+            assigned_asset.status = "returned"         # <--- IMPORTANT
+            assigned_asset.asset_condition = condition  # Sync condition
+            assigned_asset.save()
 
-    return redirect("requests:admin_manage_returns")
+        # Mark borrow request as fully returned
+        borrow_request.is_fully_returned = True
+        borrow_request.save()
 
-@login_required
-def admin_update_return_condition(request, return_id):
-    """
-    Update the condition of an already returned asset.
-    Also updates linked asset condition and status.
-    """
-    asset_return = get_object_or_404(AssetReturn, pk=return_id)
-    asset = asset_return.borrow_request.asset
-
-    if request.method == "POST":
-        new_condition = request.POST.get("condition")
-
-        if new_condition not in CONDITION_STATUS_MAP:
-            msg = "Invalid condition update."
-            messages.error(request, msg)
-            if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                return JsonResponse({"success": False, "error": msg})
-            return redirect("requests:staff_manage_returns")
-
-        # Update return record
-        asset_return.condition_on_return = new_condition
-        asset_return.remarks = request.POST.get("remarks", asset_return.remarks)
-        asset_return.save(update_fields=["condition_on_return", "remarks"])
-
-        # Update asset
-        asset.asset_condition = new_condition
-        asset.status = CONDITION_STATUS_MAP[new_condition]
-        asset.save(update_fields=["asset_condition", "status"])
-
-        messages.success(request, "Return details updated successfully.")
-
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({
-                "success": True,
-                "new_condition": new_condition,
-                "new_status": asset.status,
-                "remarks": asset_return.remarks,
-            })
+        messages.success(request, "Asset marked as returned successfully.")
+        return redirect("requests:admin_manage_returns")
 
     return redirect("requests:admin_manage_returns")
 
@@ -319,39 +375,34 @@ def available_assets(request):
 
 
 
-
 # --------------------------
 # STAFF: Manage Requests
 # --------------------------
 @login_required
 def staff_manage_requests(request):
-    """Staff view all user requests with pending ones on top, paginated with search and filter."""
+    """Staff view all requests with search and filter, paginated."""
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all')
 
     # Base queryset
-    requests_qs = AssetRequest.objects.select_related('user', 'asset')
+    requests_qs = AssetRequest.objects.select_related('user', 'assigned_asset')
 
     # Apply search across username, asset name, and status
     if search_query:
         requests_qs = requests_qs.filter(
             Q(user__username__icontains=search_query) |
-            Q(asset__asset_name__icontains=search_query) |
-            Q(status__icontains=search_query)
+            Q(asset_category__icontains=search_query) |
+            Q(status__icontains=search_query) |
+            Q(assigned_asset__model__icontains=search_query) |
+            Q(assigned_asset__serial_number__icontains=search_query)
         )
 
     # Apply status filter (skip "all")
     if status_filter != 'all':
         requests_qs = requests_qs.filter(status=status_filter)
 
-    # Order pending requests first, then by request_date descending
-    requests_qs = requests_qs.annotate(
-        pending_order=Case(
-            When(status='pending', then=Value(0)),
-            default=Value(1),
-            output_field=IntegerField()
-        )
-    ).order_by('pending_order', '-request_date', '-id')  # tie-breaker by ID
+    # Order by request_date descending
+    requests_qs = requests_qs.order_by('-request_date', '-id')  # tie-breaker by ID
 
     # Pagination
     paginator = Paginator(requests_qs, 5)
@@ -368,187 +419,195 @@ def staff_manage_requests(request):
     return render(request, 'requests/staff_manage_requests.html', context)
 
 
+@login_required
+def staff_request_details(request, pk):
+    # Load request
+    req = get_object_or_404(AssetRequest, pk=pk)
+
+    # ---------------------------------------
+    # Filter ONLY available assets of same category
+    # ---------------------------------------
+    available_assets = Asset.objects.filter(
+        asset_category=req.asset_category,
+        status="available"
+    ).order_by("model")
+
+    # ---------------------------------------
+    # Optional pre-assignment from dropdown
+    # ---------------------------------------
+    assign_id = request.GET.get("assign")
+
+    if assign_id:
+        try:
+            asset = Asset.objects.get(id=assign_id, status="available")
+
+            # Assign the asset to the request
+            req.assigned_asset = asset
+            req.save()
+
+            messages.success(
+                request,
+                f"Asset '{asset.model}' has been pre-assigned to this request."
+            )
+
+            # Correct URL name = get_request_details
+            return redirect("requests:staff_get_request_details", pk=req.pk)
+
+        except Asset.DoesNotExist:
+            messages.error(
+                request,
+                "The selected asset is no longer available."
+            )
+            return redirect("requests:staff_get_request_details", pk=req.pk)
+
+    # ---------------------------------------
+    # Render Page
+    # ---------------------------------------
+    context = {
+        "req": req,
+        "assets": available_assets,
+    }
+
+    return render(request, "requests/request_details.html", context)
+
 # --------------------------
 # STAFF: Approve / Reject requests
 # --------------------------
 @login_required
 def update_request_status(request, pk, action):
-    """Approve or reject a pending request."""
-    borrow_request = get_object_or_404(AssetRequest, pk=pk)
-    asset = borrow_request.asset
+    req = get_object_or_404(AssetRequest, pk=pk)
 
-    if borrow_request.status != 'pending':
-        messages.error(request, "Only pending requests can be updated.")
-        return redirect('requests:staff_manage_requests')
+    if req.status != "pending":
+        messages.warning(request, "This request has already been processed.")
+        return redirect("requests:staff_get_request_details", req.pk)
 
-    if request.method == 'POST':
-        remarks = request.POST.get('remarks', '')
+    # Save remarks if submitted
+    if request.method == "POST":
+        remarks = request.POST.get("remarks")
+        if remarks:
+            req.remarks = remarks
 
-        if action == 'approve':
-            borrow_request.status = 'approved'
-            asset.status = 'borrowed'
-            messages.success(request, f"Request approved for {borrow_request.user.username}.")
-        elif action == 'reject':
-            borrow_request.status = 'rejected'
-            asset.status = 'borrowed'
-            messages.warning(request, f"Request rejected for {borrow_request.user.username}.")
-        else:
-            messages.error(request, "Invalid action.")
-            return redirect('requests:staff_manage_requests')
+    # APPROVE
+    if action == "approve":
 
-        borrow_request.remarks = remarks
-        borrow_request.approved_by = request.user
-        borrow_request.approval_date = timezone.now()
+        if not req.assigned_asset:
+            messages.error(request, "You must assign an asset before approving.")
+            return redirect("requests:staff_get_request_details", pk)
 
+        req.status = "approved"
+        req.approved_by = request.user
+        req.approval_date = timezone.now()
+
+        # Update asset
+        asset = req.assigned_asset
+        asset.status = "borrowed"
         asset.save()
-        borrow_request.save()
 
-    return redirect('requests:staff_manage_requests')
+        req.save()
+
+        messages.success(request, "Request approved successfully.")
+        return redirect("requests:staff_get_request_details", pk)
+
+    # REJECT
+    elif action == "reject":
+        req.status = "rejected"
+        req.approved_by = request.user
+        req.approval_date = timezone.now()
+        req.assigned_asset = None
+
+        req.save()
+
+        messages.error(request, "Request rejected.")
+        return redirect("requests:staff_get_request_details", pk)
+
+    else:
+        messages.error(request, "Invalid action.")
+        return redirect("requests:staff_get_request_details", pk)
 
 
 @login_required
 def staff_manage_returns(request):
-
     search_query = request.GET.get("search", "").strip()
     condition_filter = request.GET.get("condition", "all")
 
-    # Base queryset
-    approved_requests = (
-        AssetRequest.objects.select_related("user", "asset", "approved_by")
-        .filter(status="approved")
-        .prefetch_related("returns")
-        .order_by("-request_date")
+    returns = AssetReturn.objects.select_related(
+        "borrow_request__assigned_asset",
+        "borrow_request__user",
+        "received_by",
     )
 
-    # --- SEARCH ---
+    # Search filter
     if search_query:
-        approved_requests = approved_requests.filter(
-            Q(user__username__icontains=search_query)
-            | Q(asset__asset_name__icontains=search_query)
-            | Q(asset__model__icontains=search_query)
-            | Q(returns__remarks__icontains=search_query)
-        ).distinct()
+        returns = returns.filter(
+            Q(borrow_request__user__username__icontains=search_query) |
+            Q(borrow_request__assigned_asset__model__icontains=search_query) |
+            Q(borrow_request__assigned_asset__serial_number__icontains=search_query)
+        )
 
-    # --- CONDITION FILTER ---
+    # Condition filter
     if condition_filter != "all":
-        if condition_filter == "not returned":
-            approved_requests = approved_requests.filter(returns__isnull=True)
-        else:
-            approved_requests = approved_requests.filter(
-                returns__condition_on_return__iexact=condition_filter
-            )
+        returns = returns.filter(condition_on_return=condition_filter)
 
-    # Pagination
-    paginator = Paginator(approved_requests, 5)
+    paginator = Paginator(returns, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    context = {
+    return render(request, "requests/staff_manage_returns.html", {
         "page_obj": page_obj,
-        "today": timezone.localdate(),
         "search_query": search_query,
         "condition_filter": condition_filter,
-    }
-
-    return render(request, "requests/staff_manage_returns.html", context)
+    })
 
 
-# Mapping condition -> asset status
-CONDITION_STATUS_MAP = {
-    "good": "returned",     
-    "fair": "returned",   
-    "poor": "retired",    
-}   
+@login_required
+def staff_return_detail(request, return_id):
+    ret = get_object_or_404(AssetReturn, pk=return_id)
+    return render(request, "requests/return_detail.html", {"ret": ret})
+
 
 @login_required
 def staff_mark_returned(request, req_id):
-    """
-    Mark an asset as returned.
-    Creates AssetReturn record and updates the linked Asset.
-    """
-    asset_request = get_object_or_404(AssetRequest, pk=req_id)
-    asset = asset_request.asset
+
+    borrow_request = get_object_or_404(AssetRequest, id=req_id)
 
     if request.method == "POST":
-        condition = request.POST.get("condition")  # good, fair, poor
+
         returned_date = request.POST.get("returned_date")
-        remarks = request.POST.get("remarks", "")
+        condition = request.POST.get("condition_on_return")
+        remarks = request.POST.get("remarks")
 
-        if condition not in CONDITION_STATUS_MAP:
-            msg = "Invalid condition selected."
-            messages.error(request, msg)
-            if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                return JsonResponse({"success": False, "error": msg})
-            return redirect("requests:staff_manage_returns")
-
-        # Create AssetReturn
-        asset_return = AssetReturn.objects.create(
-            borrow_request=asset_request,
-            received_by=request.user,
-            condition_on_return=condition,
-            returned_date=parse_date(returned_date),
-            remarks=remarks,
+        # Convert datetime-local to timezone-aware datetime
+        returned_dt = timezone.make_aware(
+            timezone.datetime.fromisoformat(returned_date)
         )
 
-        # Update asset condition + status
-        asset.asset_condition = condition
-        asset.status = CONDITION_STATUS_MAP[condition]
-        asset.save(update_fields=["asset_condition", "status"])
+        # Prevent multiple return records for same request
+        AssetReturn.objects.filter(borrow_request=borrow_request).delete()
 
-        messages.success(request, "Asset return recorded successfully.")
+        # Create/Save return record
+        AssetReturn.objects.create(
+            borrow_request=borrow_request,
+            returned_date=returned_dt,
+            condition_on_return=condition,
+            remarks=remarks,
+            received_by=request.user
+        )
 
-        # AJAX response
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({
-                "success": True,
-                "asset_id": asset.id,
-                "status": asset.status,
-                "condition": asset.asset_condition,
-                "return_id": asset_return.id,
-                "returned_date": asset_return.returned_date.strftime("%Y-%m-%d"),
-                "remarks": asset_return.remarks
-            })
+        # ============================
+        # UPDATE ASSET STATUS HERE
+        # ============================
+        assigned_asset = borrow_request.assigned_asset
+        if assigned_asset:
+            assigned_asset.status = "returned"         # <--- IMPORTANT
+            assigned_asset.asset_condition = condition  # Sync condition
+            assigned_asset.save()
 
-    return redirect("requests:staff_manage_returns")
+        # Mark borrow request as fully returned
+        borrow_request.is_fully_returned = True
+        borrow_request.save()
 
-@login_required
-def staff_update_return_condition(request, return_id):
-    """
-    Update the condition of an already returned asset.
-    Also updates linked asset condition and status.
-    """
-    asset_return = get_object_or_404(AssetReturn, pk=return_id)
-    asset = asset_return.borrow_request.asset
-
-    if request.method == "POST":
-        new_condition = request.POST.get("condition")
-
-        if new_condition not in CONDITION_STATUS_MAP:
-            msg = "Invalid condition update."
-            messages.error(request, msg)
-            if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                return JsonResponse({"success": False, "error": msg})
-            return redirect("requests:staff_manage_returns")
-
-        # Update return record
-        asset_return.condition_on_return = new_condition
-        asset_return.remarks = request.POST.get("remarks", asset_return.remarks)
-        asset_return.save(update_fields=["condition_on_return", "remarks"])
-
-        # Update asset
-        asset.asset_condition = new_condition
-        asset.status = CONDITION_STATUS_MAP[new_condition]
-        asset.save(update_fields=["asset_condition", "status"])
-
-        messages.success(request, "Return details updated successfully.")
-
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({
-                "success": True,
-                "new_condition": new_condition,
-                "new_status": asset.status,
-                "remarks": asset_return.remarks,
-            })
+        messages.success(request, "Asset marked as returned successfully.")
+        return redirect("requests:staff_manage_returns")
 
     return redirect("requests:staff_manage_returns")
 
@@ -639,86 +698,69 @@ def available_assets(request):
 # --------------------------
 
 @login_required
-def request_asset(request, pk):
-    asset = get_object_or_404(Asset, pk=pk)
-
+def make_request(request):
     if request.method == 'POST':
-        request_date = request.POST.get('request_date')
-        return_date = request.POST.get('return_date')
+        form = AssetRequestForm(request.POST)
+        if form.is_valid():
+            asset_request = form.save(commit=False)
+            asset_request.user = request.user
+            asset_request.request_date = form.cleaned_data["request_date"]
+            asset_request.return_date = form.cleaned_data["return_date"]
+            asset_request.save()
+            messages.success(request, "Your asset request has been submitted successfully!")
+            return redirect('accounts:normal_dashboard')
+        else:
+            messages.error(request, "Please correct the errors below.")
+            return redirect('accounts:normal_dashboard')
 
-        # Missing fields
-        if not request_date or not return_date:
-            messages.error(request, "Please select both request and return dates.")
-            return redirect('requests:request_asset', pk=pk)
+    return redirect('accounts:normal_dashboard')
 
-        # Convert dates safely
-        try:
-            req_date_obj = datetime.strptime(request_date, "%Y-%m-%d").date()
-            ret_date_obj = datetime.strptime(return_date, "%Y-%m-%d").date()
-        except ValueError:
-            messages.error(request, "Invalid date format.")
-            return redirect('requests:request_asset', pk=pk)
 
-        # Prevent duplicate pending requests
-        if AssetRequest.objects.filter(user=request.user, asset=asset, status='pending').exists():
-            messages.warning(request, "You already have a pending request for this asset.")
-            return redirect('requests:request_asset', pk=pk)
+@login_required
+def my_requests(request):
+    user_requests = AssetRequest.objects.filter(
+        user=request.user
+    ).select_related("user", "assigned_asset", "approved_by")
 
-        # Construct but don't save yet
-        new_request = AssetRequest(
-            user=request.user,
-            asset=asset,
-            request_date=req_date_obj,
-            return_date=ret_date_obj,
-        )
+    return render(request, "accounts/normal_dashboard.html", {
+        "requests": user_requests
+    })
 
-        # Validate with model clean()
-        try:
-            new_request.full_clean()
-            new_request.save()
-            messages.success(request, "Your request has been submitted successfully!")
-        except ValidationError as e:
-            messages.error(request, e.message)
-            return redirect('requests:request_asset', pk=pk)
-
-        return redirect('requests:request_asset', pk=pk)
-
-    return render(request, 'requests/request_asset_form.html', {'asset': asset})
 
 
 # --------------------------
 # USER: View own requests
 # --------------------------
-@login_required
-def my_requests(request):
-    query = request.GET.get('q', '').strip()  # Search query
-    status_filter = request.GET.get('status', '').strip()  # Status filter
+# @login_required
+# def my_requests(request):
+#     query = request.GET.get('q', '').strip()  # Search query
+#     status_filter = request.GET.get('status', '').strip()  # Status filter
 
-    # Base queryset: requests of the logged-in user
-    requests_list = AssetRequest.objects.filter(user=request.user).select_related('asset')
+#     # Base queryset: requests of the logged-in user
+#     requests_list = AssetRequest.objects.filter(user=request.user).select_related('asset')
 
-    # Apply search by asset name or model
-    if query:
-        requests_list = requests_list.filter(
-            Q(asset__asset_name__icontains=query) |
-            Q(asset__model__icontains=query)
-        )
+#     # Apply search by asset name or model
+#     if query:
+#         requests_list = requests_list.filter(
+#             Q(asset__asset_name__icontains=query) |
+#             Q(asset__model__icontains=query)
+#         )
 
-    # Apply status filter if selected
-    if status_filter in ['pending', 'approved', 'rejected', 'returned']:
-        requests_list = requests_list.filter(status=status_filter)
+#     # Apply status filter if selected
+#     if status_filter in ['pending', 'approved', 'rejected', 'returned']:
+#         requests_list = requests_list.filter(status=status_filter)
 
-    # Paginate the results
-    paginator = Paginator(requests_list, 5)  # 5 requests per page
-    page_number = request.GET.get('page')
-    requests_page = paginator.get_page(page_number)
+#     # Paginate the results
+#     paginator = Paginator(requests_list, 5)  # 5 requests per page
+#     page_number = request.GET.get('page')
+#     requests_page = paginator.get_page(page_number)
 
-    context = {
-        'requests': requests_page,
-        'query': query,
-        'status_filter': status_filter,
-    }
-    return render(request, 'requests/my_requests.html', context)
+#     context = {
+#         'requests': requests_page,
+#         'query': query,
+#         'status_filter': status_filter,
+#     }
+#     return render(request, 'requests/my_requests.html', context)
 
 
 # --------------------------
