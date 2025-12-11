@@ -64,11 +64,6 @@ urlpatterns = [
         name='edit_asset'
     ),
     path(
-        'assets/<int:pk>/delete/',
-        views.delete_asset,
-        name='delete_asset'
-    ),
-    path(
         'assets/<int:pk>/',
         views.asset_detail,
         name='asset_detail'

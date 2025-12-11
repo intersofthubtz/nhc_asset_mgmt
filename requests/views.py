@@ -112,7 +112,7 @@ def admin_request_details(request, pk):
 
 
 @login_required
-def assign_asset(request, pk):
+def admin_assign_asset(request, pk):
     req = get_object_or_404(AssetRequest, pk=pk)
 
     # Only allow asset assignment when pending
@@ -470,6 +470,42 @@ def staff_request_details(request, pk):
 
     return render(request, "requests/request_details.html", context)
 
+
+@login_required
+def staff_assign_asset(request, pk):
+    req = get_object_or_404(AssetRequest, pk=pk)
+
+    # Only allow asset assignment when pending
+    if req.status != "pending":
+        messages.warning(request, "Cannot assign asset. Request is already processed.")
+        return redirect("requests:staff_get_request_details", pk)
+
+    asset_id = request.GET.get("asset_id")
+
+    if not asset_id:
+        messages.error(request, "No asset selected.")
+        return redirect("requests:staff_get_request_details", pk)
+
+    asset = get_object_or_404(Asset, pk=asset_id)
+
+    # Ensure asset category matches request category
+    if asset.asset_category != req.asset_category:
+        messages.error(request, "Asset category does not match request category.")
+        return redirect("requests:staff_get_request_details", pk)
+
+    # Ensure asset is available
+    if asset.status != "available":
+        messages.error(request, "Asset is not available.")
+        return redirect("requests:staff_get_request_details", pk)
+
+    # Assign asset
+    req.assigned_asset = asset
+    req.save()
+
+    messages.success(request, f"Asset {asset.model} assigned successfully.")
+    return redirect("requests:staff_get_request_details", pk)
+
+
 # --------------------------
 # STAFF: Approve / Reject requests
 # --------------------------
@@ -691,8 +727,6 @@ def available_assets(request):
     return render(request, "requests/available_assets.html", context)
 
 
-
-
 # --------------------------
 # USER: Request an Asset
 # --------------------------
@@ -726,41 +760,6 @@ def my_requests(request):
         "requests": user_requests
     })
 
-
-
-# --------------------------
-# USER: View own requests
-# --------------------------
-# @login_required
-# def my_requests(request):
-#     query = request.GET.get('q', '').strip()  # Search query
-#     status_filter = request.GET.get('status', '').strip()  # Status filter
-
-#     # Base queryset: requests of the logged-in user
-#     requests_list = AssetRequest.objects.filter(user=request.user).select_related('asset')
-
-#     # Apply search by asset name or model
-#     if query:
-#         requests_list = requests_list.filter(
-#             Q(asset__asset_name__icontains=query) |
-#             Q(asset__model__icontains=query)
-#         )
-
-#     # Apply status filter if selected
-#     if status_filter in ['pending', 'approved', 'rejected', 'returned']:
-#         requests_list = requests_list.filter(status=status_filter)
-
-#     # Paginate the results
-#     paginator = Paginator(requests_list, 5)  # 5 requests per page
-#     page_number = request.GET.get('page')
-#     requests_page = paginator.get_page(page_number)
-
-#     context = {
-#         'requests': requests_page,
-#         'query': query,
-#         'status_filter': status_filter,
-#     }
-#     return render(request, 'requests/my_requests.html', context)
 
 
 # --------------------------
