@@ -770,15 +770,20 @@ def cancel_request(request, pk):
     borrow_request = get_object_or_404(AssetRequest, pk=pk, user=request.user)
 
     if borrow_request.status != 'pending':
-        messages.error(request, "Only pending requests can be cancelled.")
-    else:
-        borrow_request.status = 'cancelled'
-        borrow_request.asset.status = 'available'  # Make asset available again
-        borrow_request.asset.save()
-        borrow_request.save()
-        messages.success(request, "Your request has been cancelled successfully.")
+        messages.error(request, "You can only cancel pending requests.")
+        return redirect('accounts:normal_dashboard')
 
-    return redirect('requests:my_requests')
+    # If an asset was assigned, mark it as available
+    if borrow_request.assigned_asset:
+        borrow_request.assigned_asset.status = 'Available'
+        borrow_request.assigned_asset.save()
+
+    # Update request status
+    borrow_request.status = 'cancelled'
+    borrow_request.save()
+
+    messages.success(request, "Request has been cancelled successfully.")
+    return redirect('accounts:normal_dashboard')
 
 
 

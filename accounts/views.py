@@ -1,5 +1,5 @@
 import datetime
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -15,6 +15,7 @@ from assets.forms import AssetForm
 from assets.models import Asset
 from requests.models import AssetRequest
 from .forms import UserRegistrationForm, UserLoginForm
+
 
 # --- Decorators ---
 
@@ -163,51 +164,48 @@ def staff_report(request):
     return render(request, 'assets/staff_report.html', context)
 
 # --- Normal User Dashboard ---
-
 @login_required
 @roles_required('normal')
 @nocache
 def normal_dashboard(request):
-    user_requests = AssetRequest.objects.filter(user=request.user).order_by('-request_date')
+    search_query = request.GET.get("search", "")
+    status_filter = request.GET.get("status", "all")
+    category_filter = request.GET.get("category", "all")
 
-    # Filters
-    status = request.GET.get("status")
-    category = request.GET.get("category")
-    search = request.GET.get("search")
+    qs = AssetRequest.objects.filter(user=request.user)
 
-    if status:
-        user_requests = user_requests.filter(status=status)
-    if category:
-        user_requests = user_requests.filter(asset_category=category)
-    if search:
-        user_requests = user_requests.filter(
-            Q(remarks__icontains=search) |
-            Q(asset_category__icontains=search) |
-            Q(assigned_asset__model__icontains=search) |
-            Q(assigned_asset__serial_number__icontains=search) |
-            Q(assigned_asset__description__icontains=search)
-    )
+    # SEARCH
+    if search_query:
+        qs = qs.filter(
+            Q(asset_category__icontains=search_query) |
+            Q(remarks__icontains=search_query)
+        )
 
+    # STATUS FILTER
+    if status_filter != "all":
+        qs = qs.filter(status=status_filter)
 
-    # Pagination
-    paginator = Paginator(user_requests, 5)
-    page_number = request.GET.get('page')
-    user_requests_page = paginator.get_page(page_number)
+    # CATEGORY FILTER
+    if category_filter != "all":
+        qs = qs.filter(asset_category=category_filter)
 
-    # Statistics
-    pending_requests_count = AssetRequest.objects.filter(user=request.user, status='pending').count()
-    approved_requests_count = AssetRequest.objects.filter(user=request.user, status='approved').count()
-    rejected_requests_count = AssetRequest.objects.filter(user=request.user, status='rejected').count()
-    processed_requests_count = approved_requests_count + rejected_requests_count
+    qs = qs.order_by("-request_date")
+
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'user': request.user,
-        'requests': user_requests_page,
-        'pending_requests_count': pending_requests_count,
-        'approved_requests_count': approved_requests_count,
-        'rejected_requests_count': rejected_requests_count,
-        'processed_requests_count': processed_requests_count,
-        'categories': AssetRequest.CATEGORY_CHOICES,
+        "page_obj": page_obj,
+        "search_query": search_query,
+        "status_filter": status_filter,
+        "category_filter": category_filter,
+
+        # stats
+        "pending_requests_count": qs.filter(status="pending").count(),
+        "approved_requests_count": qs.filter(status="approved").count(),
+        "rejected_requests_count": qs.filter(status="rejected").count(),
     }
 
-    return render(request, 'accounts/normal_dashboard.html', context)
+    return render(request, "accounts/normal_dashboard.html", context)
+

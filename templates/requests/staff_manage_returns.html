@@ -23,7 +23,7 @@
       <option value="all" {% if condition_filter == 'all' %}selected{% endif %}>All Conditions</option>
       <option value="good" {% if condition_filter == 'good' %}selected{% endif %}>Good</option>
       <option value="fair" {% if condition_filter == 'fair' %}selected{% endif %}>Fair</option>
-      <option value="damaged" {% if condition_filter == 'damaged' %}selected{% endif %}>Damaged</option>
+      <option value="poor" {% if condition_filter == 'poor' %}selected{% endif %}>Poor</option>
       <option value="lost" {% if condition_filter == 'lost' %}selected{% endif %}>Lost</option>
     </select>
   </form>
@@ -76,7 +76,7 @@
             <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
               {% if ret.condition_on_return == 'good' %}bg-green-100 text-green-700
               {% elif ret.condition_on_return == 'fair' %}bg-yellow-100 text-yellow-700
-              {% elif ret.condition_on_return == 'damaged' %}bg-red-100 text-red-700
+              {% elif ret.condition_on_return == 'poor' %}bg-red-100 text-red-700
               {% elif ret.condition_on_return == 'lost' %}bg-gray-300 text-gray-700{% endif %}">
               {{ ret.get_condition_on_return_display }}
             </span>
@@ -98,7 +98,7 @@
             {% if not ret.returned_date %}
               <!-- Mark as Returned ONLY if not returned -->
               <button onclick="openReturnModal('{{ ret.borrow_request.pk }}')"
-                 class="text-green-600 hover:text-green-900" title="Mark as Fully Returned">
+                 class="text-green-600 hover:text-green-900" title="Mark as Returned">
                 <i class="fas fa-check-circle"></i>
               </button>
             {% else %}
@@ -174,7 +174,7 @@
               class="w-full border px-3 py-2 rounded mb-4" required>
         <option value="good">Good</option>
         <option value="fair">Fair</option>
-        <option value="damaged">Damaged</option>
+        <option value="poor">Poor</option>
         <option value="lost">Lost</option>
       </select>
 

@@ -40,9 +40,8 @@
         <option value="all" {% if condition_filter == 'all' %}selected{% endif %}>All Conditions</option>
         <option value="Good" {% if condition_filter == 'Good' %}selected{% endif %}>Good</option>
         <option value="Fair" {% if condition_filter == 'Fair' %}selected{% endif %}>Fair</option>
-        <option value="Damaged" {% if condition_filter == 'Damaged' %}selected{% endif %}>Damaged</option>
         <option value="Poor" {% if condition_filter == 'Poor' %}selected{% endif %}>Poor</option>
-        {% comment %} Lost {% endcomment %}
+        <option value="Lost" {% if condition_filter == 'Lost' %}selected{% endif %}>Lost</option>
       </select>
     </div>
   </form>

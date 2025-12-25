@@ -25,7 +25,9 @@ SECRET_KEY = 'django-insecure-q4^l=jgft)&lhs$hy&7-!_96-!=o$7opn(%lw=84^lxs&l-hc9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['10.10.12.142', 'localhost', '127.0.0.1']
+
 
 
 # Application definition
@@ -38,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'widget_tweaks',  # for customizing form widgets in templates
+    'widget_tweaks',  
 
     # Local apps
     'assets',

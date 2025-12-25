@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="w-full max-w-6xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
+<div class="w-full max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
 
   <!-- HEADER -->
-  <div class="mb-6 flex justify-between items-center">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <div>
-      <h2 class="text-3xl font-bold text-nhc-blue">User Dashboard</h2>
+      <h2 class="text-2xl sm:text-3xl font-bold text-nhc-blue tracking-tight">
+        User Dashboard
+      </h2>
       <p class="text-gray-700 mt-1">
         Welcome, <span class="font-semibold text-nhc-blue">{{ user.username }}</span>!
-        Manage your borrow requests and submit new ones.
+        Track and manage your borrow requests.
       </p>
     </div>
 
-    <!-- OPEN MODAL BUTTON -->
+    <!-- NEW REQUEST BUTTON -->
     <a href="javascript:void(0)"
        onclick="openModal()"
        class="bg-nhc-yellow hover:bg-yellow-500 text-nhc-black font-semibold px-4 py-2 rounded-lg shadow-md transition">
@@ -21,211 +23,237 @@
     </a>
   </div>
 
-  <!-- STAT CARDS -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+  <!-- STATS -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-      <h5 class="text-xl font-bold text-nhc-blue mb-2">Pending Requests</h5>
-      <p class="text-gray-600 text-sm mb-3">Requests awaiting approval</p>
-      <span class="bg-nhc-yellow text-nhc-black px-4 py-1 rounded-full font-semibold text-lg">
+    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+      <h5 class="text-xl font-bold text-nhc-blue mb-1">Pending</h5>
+      <p class="text-gray-600 text-sm mb-2">Awaiting approval</p>
+      <span class="bg-yellow-400 text-black px-4 py-1 rounded-full font-semibold text-lg">
         {{ pending_requests_count|default:"0" }}
       </span>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-      <h5 class="text-xl font-bold text-nhc-blue mb-2">Approved Requests</h5>
-      <p class="text-gray-600 text-sm mb-3">Requests that have been approved</p>
-      <span class="bg-green-500 text-white px-4 py-1 rounded-full font-bold text-lg">
+    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+      <h5 class="text-xl font-bold text-nhc-blue mb-1">Approved</h5>
+      <p class="text-gray-600 text-sm mb-2">Approved requests</p>
+      <span class="bg-green-500 text-white px-4 py-1 rounded-full font-semibold text-lg">
         {{ approved_requests_count|default:"0" }}
       </span>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-      <h5 class="text-xl font-bold text-nhc-blue mb-2">Rejected Requests</h5>
-      <p class="text-gray-600 text-sm mb-3">Requests that have been rejected</p>
-      <span class="bg-red-600 text-white px-4 py-1 rounded-full font-bold text-lg">
+    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+      <h5 class="text-xl font-bold text-nhc-blue mb-1">Rejected</h5>
+      <p class="text-gray-600 text-sm mb-2">Rejected requests</p>
+      <span class="bg-red-600 text-white px-4 py-1 rounded-full font-semibold text-lg">
         {{ rejected_requests_count|default:"0" }}
       </span>
     </div>
 
   </div>
 
-  <!-- FILTER BAR -->
-  <div class="flex flex-wrap gap-3 mb-4">
+  <!-- SEARCH & FILTERS (STAFF DESIGN REUSED) -->
+  <form id="searchForm" method="get"
+        class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5 bg-white p-4 rounded-lg shadow-md border border-gray-100">
 
     <!-- SEARCH -->
-    <input id="searchInput" type="text"
-           placeholder="Search requests..."
-           class="border p-2 rounded-lg">
+    <div class="w-full sm:w-1/2">
+      <input type="text" name="search" value="{{ search_query }}"
+             placeholder="Search by category or remarks..."
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nhc-blue transition shadow-sm">
+    </div>
 
-    <!-- STATUS FILTER -->
-    <select id="statusFilter" class="border p-2 rounded-lg">
-      <option value="">All Status</option>
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
-    </select>
+    <!-- FILTERS -->
+    <div class="flex gap-3 w-full sm:w-auto flex-wrap">
 
-    <!-- CATEGORY FILTER -->
-    <select id="categoryFilter" class="border p-2 rounded-lg">
-      <option value="">All Categories</option>
-      <option value="laptop">Laptop</option>
-      <option value="projector">Projector</option>
-      <option value="desktop">Desktop</option>
-    </select>
+      <select name="status"
+              class="px-4 py-2 border border-gray-300 rounded-lg w-full sm:w-44">
+        <option value="all">All Status</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
 
-  </div>
+      <select name="category"
+              class="px-4 py-2 border border-gray-300 rounded-lg w-full sm:w-44">
+        <option value="all">All Categories</option>
+        <option value="laptop" {% if category_filter == 'laptop' %}selected{% endif %}>Laptop</option>
+        <option value="projector" {% if category_filter == 'projector' %}selected{% endif %}>Projector</option>
+        <option value="desktop" {% if category_filter == 'desktop' %}selected{% endif %}>Desktop</option>
+      </select>
 
-  <!-- REQUEST TABLE -->
-  <div class="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+    </div>
+  </form>
 
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-100">
+  <!-- REQUESTS TABLE -->
+  <div class="overflow-x-auto bg-white shadow-md rounded-none">
+    <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+
+      <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
         <tr>
-          <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Category / Asset</th>
-          <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Request Date</th>
-          <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Return Date</th>
-          <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-          <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Remarks</th>
+          <th class="py-3 px-4 text-left">Asset Category</th>
+          <th class="py-3 px-4 text-left">Request Date</th>
+          <th class="py-3 px-4 text-left">Return Date</th>
+          <th class="py-3 px-4 text-left">Status</th>
+          <th class="py-3 px-4 text-left">Remarks</th>
+          <th class="py-3 px-4 text-center">Actions</th>
         </tr>
       </thead>
 
-      <tbody class="bg-white divide-y divide-gray-200">
-        {% for r in requests %}
-          <tr>
-            <td class="px-6 py-4">
-              {% if r.assigned_asset %}
-                {{ r.asset_category }}
-              {% else %}
-                {{ r.asset_category }}
-              {% endif %}
-            </td>
+      <tbody class="divide-y divide-gray-100">
+        {% for r in page_obj %}
+        <tr class="hover:bg-gray-50 transition">
 
-            <td class="px-6 py-4">{{ r.request_date }}</td>
+          <td class="py-3 px-4 font-semibold text-nhc-blue">
+            {{ r.asset_category }}
+          </td>
 
-            <td class="px-6 py-4">{{ r.return_date }}</td>
+          <td class="py-3 px-4">{{ r.request_date }}</td>
+          <td class="py-3 px-4">{{ r.return_date }}</td>
 
-            <td class="px-6 py-4 capitalize">
-              {% if r.status == "pending" %}
-                <span class="bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold">Pending</span>
-              {% elif r.status == "approved" %}
-                <span class="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">Approved</span>
-              {% else %}
-                <span class="bg-red-200 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">Rejected</span>
-              {% endif %}
-            </td>
+          <td class="py-3 px-4">
+            {% if r.status == "pending" %}
+              <span class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 font-semibold">
+                Pending
+              </span>
+            {% elif r.status == "approved" %}
+              <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold">
+                Approved
+              </span>
+            {% elif r.status == "rejected" %}
+              <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold">
+                Rejected
+              </span>
+            {% elif r.status == "cancelled" %}
+              <span class="px-3 py-1 rounded-full bg-gray-200 text-gray-600 font-semibold">
+                Cancelled
+              </span>
+            {% endif %}
+          </td>
 
-            <td class="px-6 py-4">{{ r.remarks|default:"-" }}</td>
-          </tr>
+          <td class="py-3 px-4">{{ r.remarks|default:"—" }}</td>
 
+          <td class="py-3 px-4 text-center">
+            {% if r.status == "pending" %}
+              <a href="{% url 'requests:cancel_request' r.pk %}"
+                 onclick="return confirm('Are you sure you want to cancel this request?')"
+                 class="text-red-600 hover:text-red-800 font-semibold">
+                Cancel
+              </a>
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
+
+        </tr>
         {% empty %}
-          <tr>
-            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-              You have not made any requests yet.
-            </td>
-          </tr>
+        <tr>
+          <td colspan="6" class="py-8 text-center text-gray-500">
+            No requests found.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
-    </table>
 
+    </table>
   </div>
 
   <!-- PAGINATION -->
-  <div class="flex justify-center space-x-3 mt-6">
+  {% if page_obj.has_other_pages %}
+  <nav class="flex justify-center items-center mt-6 gap-2">
 
-    {% if requests.has_previous %}
-      <a href="?page={{ requests.previous_page_number }}"
-         class="px-4 py-2 bg-gray-200 rounded">Previous</a>
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}&category={{ category_filter }}"
+         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black">
+        Previous
+      </a>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">
+        Previous
+      </span>
     {% endif %}
 
-    <span class="px-4 py-2 bg-gray-300 rounded">
-      Page {{ requests.number }} of {{ requests.paginator.num_pages }}
+    <span class="px-4 py-2 bg-nhc-yellow text-nhc-black rounded-md font-semibold">
+      {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
     </span>
 
-    {% if requests.has_next %}
-      <a href="?page={{ requests.next_page_number }}"
-         class="px-4 py-2 bg-gray-200 rounded">Next</a>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&status={{ status_filter }}&category={{ category_filter }}"
+         class="px-4 py-2 bg-nhc-blue text-white rounded-md hover:bg-nhc-yellow hover:text-nhc-black">
+        Next
+      </a>
+    {% else %}
+      <span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">
+        Next
+      </span>
     {% endif %}
 
-  </div>
+  </nav>
+  {% endif %}
 
 </div>
 
-<!-- MODAL FORM -->
+<!-- MODAL -->
 <div id="requestModal"
      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
 
   <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 relative">
-
     <button onclick="closeModal()"
             class="absolute top-3 right-3 text-gray-600 hover:text-black text-xl">&times;</button>
 
     <h3 class="text-2xl font-bold text-nhc-blue mb-4">Make New Request</h3>
 
-    <form id="newRequestForm" method="POST" action="{% url 'requests:make_request' %}">
+    <form method="POST" action="{% url 'requests:make_request' %}">
       {% csrf_token %}
 
-      <!-- CATEGORY -->
       <label class="block font-semibold mb-1">Asset Category</label>
       <select name="asset_category" class="w-full border p-2 rounded mb-3" required>
-        <option value="" disabled selected>Select Category</option>
+        <option disabled selected>Select Category</option>
         <option value="laptop">Laptop</option>
         <option value="projector">Projector</option>
         <option value="desktop">Desktop</option>
       </select>
 
-      <!-- REQUEST -->
       <label class="block font-semibold mb-1">Request Date</label>
-      <input type="date" name="request_date"
-             class="w-full border p-2 rounded mb-4" required> 
+      <input type="date" name="request_date" class="w-full border p-2 rounded mb-3" required>
 
-      <!-- RETURN -->
       <label class="block font-semibold mb-1">Return Date</label>
-      <input type="date" name="return_date"
-             class="w-full border p-2 rounded mb-4" required>
+      <input type="date" name="return_date" class="w-full border p-2 rounded mb-4" required>
 
-      <button type="submit"
-              class="w-full bg-nhc-blue text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
+      <button class="w-full bg-nhc-blue text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
         Submit Request
       </button>
-
     </form>
-
   </div>
 </div>
 
-<!-- JAVASCRIPT -->
+<!-- JS -->
 <script>
-function openModal() {
-  const m = document.getElementById("requestModal");
-  m.classList.remove("hidden");
-  m.classList.add("flex");
-}
+  function openModal() {
+    document.getElementById("requestModal").classList.remove("hidden");
+    document.getElementById("requestModal").classList.add("flex");
+  }
 
-function closeModal() {
-  const m = document.getElementById("requestModal");
-  m.classList.add("hidden");
-  m.classList.remove("flex");
-}
+  function closeModal() {
+    document.getElementById("requestModal").classList.add("hidden");
+    document.getElementById("requestModal").classList.remove("flex");
+  }
 
-/* FILTER HANDLING */
-function applyFilters() {
-  let search = document.getElementById("searchInput").value;
-  let status = document.getElementById("statusFilter").value;
-  let category = document.getElementById("categoryFilter").value;
+  const searchInput = document.querySelector('input[name="search"]');
+  const statusSelect = document.querySelector('select[name="status"]');
+  const categorySelect = document.querySelector('select[name="category"]');
+  const searchForm = document.getElementById('searchForm');
+  let typingTimer;
 
-  let url = new URL(window.location.href);
+  searchInput.addEventListener('keyup', () => {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => searchForm.submit(), 500);
+  });
 
-  search ? url.searchParams.set("search", search) : url.searchParams.delete("search");
-  status ? url.searchParams.set("status", status) : url.searchParams.delete("status");
-  category ? url.searchParams.set("category", category) : url.searchParams.delete("category");
-
-  window.location.href = url;
-}
-
-document.getElementById("searchInput").addEventListener("input", applyFilters);
-document.getElementById("statusFilter").addEventListener("change", applyFilters);
-document.getElementById("categoryFilter").addEventListener("change", applyFilters);
+  searchInput.addEventListener('keydown', () => clearTimeout(typingTimer));
+  statusSelect.addEventListener('change', () => searchForm.submit());
+  categorySelect.addEventListener('change', () => searchForm.submit());
 </script>
 
 {% endblock %}
