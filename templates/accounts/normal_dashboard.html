@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
+
 <div class="w-full max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
 
   <!-- HEADER -->
@@ -109,7 +110,7 @@
             {{ r.asset_category }}
           </td>
 
-          <td class="py-3 px-4">{{ r.request_date }}</td>
+          <td class="py-3 px-4">{{ r.request_date|date:"M d, Y • H:i" }}</td>
           <td class="py-3 px-4">{{ r.return_date }}</td>
 
           <td class="py-3 px-4">
@@ -215,11 +216,11 @@
         <option value="desktop">Desktop</option>
       </select>
 
-      <label class="block font-semibold mb-1">Request Date</label>
-      <input type="date" name="request_date" class="w-full border p-2 rounded mb-3" required>
-
       <label class="block font-semibold mb-1">Return Date</label>
-      <input type="date" name="return_date" class="w-full border p-2 rounded mb-4" required>
+      <input type="date"
+             name="return_date"
+             class="w-full border p-2 rounded mb-4"
+             required>
 
       <button class="w-full bg-nhc-blue text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
         Submit Request
@@ -227,6 +228,7 @@
     </form>
   </div>
 </div>
+
 
 <!-- JS -->
 <script>

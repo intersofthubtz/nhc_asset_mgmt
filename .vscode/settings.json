@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "linecap"
-    ]
+    ],
+    "workbench.editor.enablePreview": true
 }

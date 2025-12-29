@@ -29,13 +29,20 @@ class AssetRequest(models.Model):
 
     asset_category = models.CharField(
         max_length=50,
-        choices=CATEGORY_CHOICES,
-        default='laptop'
+        choices=CATEGORY_CHOICES
     )
 
-    request_date = models.DateField()
+    # Automatically set on creation (date + time)
+    request_date = models.DateTimeField(
+        auto_now_add=True
+    )
+
     return_date = models.DateField()
-    remarks = models.TextField(blank=True, null=True)
+
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
 
     # =========================
     # WORKFLOW / ADMIN FIELDS
@@ -62,23 +69,29 @@ class AssetRequest(models.Model):
         related_name='approved_asset_requests'
     )
 
-    approval_date = models.DateTimeField(null=True, blank=True)
+    approval_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
 
     # =========================
     # VALIDATIONS
     # =========================
     def clean(self):
-        today = timezone.localdate()
+        now = timezone.now()
 
-        if self.request_date and self.request_date < today:
-            raise ValidationError("Request date cannot be before today.")
-
-        if self.request_date and self.return_date:
-            if self.return_date < self.request_date:
-                raise ValidationError("Return date cannot be earlier than the request date.")
+        if self.return_date and self.return_date < now.date():
+            raise ValidationError(
+                "Return date cannot be earlier than today."
+            )
 
     # =========================
     # BUSINESS LOGIC
@@ -101,7 +114,9 @@ class AssetRequest(models.Model):
         Safely cancel the request if allowed.
         """
         if not self.can_be_cancelled(user):
-            raise ValidationError("This request cannot be cancelled.")
+            raise ValidationError(
+                "This request cannot be cancelled."
+            )
 
         self.status = 'cancelled'
         self.save(update_fields=['status'])
@@ -130,7 +145,10 @@ class AssetReturn(models.Model):
         related_name='returns'
     )
 
-    returned_date = models.DateTimeField(null=True, blank=True)
+    returned_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
 
     condition_on_return = models.CharField(
         max_length=10,
@@ -146,12 +164,20 @@ class AssetReturn(models.Model):
         related_name='received_returns'
     )
 
-    remarks = models.TextField(blank=True, null=True)
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
-        return f"Return → {self.borrow_request.asset_category} by {self.borrow_request.user.username}"
+        return (
+            f"Return → {self.borrow_request.asset_category} "
+            f"by {self.borrow_request.user.username}"
+        )
 
     class Meta:
         ordering = ['-returned_date']

@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.db import transaction
 from assets.models import Asset
 from requests.forms import AssetRequestForm
 from .models import AssetRequest, AssetReturn
@@ -249,49 +250,41 @@ def admin_return_detail(request, return_id):
 
 @login_required
 def admin_mark_returned(request, req_id):
-
     borrow_request = get_object_or_404(AssetRequest, id=req_id)
 
     if request.method == "POST":
+        condition = request.POST.get("condition_on_return", "good")
+        remarks = request.POST.get("remarks", "")
 
-        returned_date = request.POST.get("returned_date")
-        condition = request.POST.get("condition_on_return")
-        remarks = request.POST.get("remarks")
+        with transaction.atomic():
+            # Delete any previous return record
+            AssetReturn.objects.filter(borrow_request=borrow_request).delete()
 
-        # Convert datetime-local to timezone-aware datetime
-        returned_dt = timezone.make_aware(
-            timezone.datetime.fromisoformat(returned_date)
-        )
+            # Create new return record with automatic timestamp
+            AssetReturn.objects.create(
+                borrow_request=borrow_request,
+                returned_date=timezone.now(),  # auto timestamp
+                condition_on_return=condition,
+                remarks=remarks,
+                received_by=request.user
+            )
 
-        # Prevent multiple return records for same request
-        AssetReturn.objects.filter(borrow_request=borrow_request).delete()
+            # Update assigned asset status
+            assigned_asset = borrow_request.assigned_asset
+            if assigned_asset:
+                assigned_asset.status = "returned"
+                assigned_asset.asset_condition = condition
+                assigned_asset.save()
 
-        # Create/Save return record
-        AssetReturn.objects.create(
-            borrow_request=borrow_request,
-            returned_date=returned_dt,
-            condition_on_return=condition,
-            remarks=remarks,
-            received_by=request.user
-        )
-
-        # ============================
-        # UPDATE ASSET STATUS HERE
-        # ============================
-        assigned_asset = borrow_request.assigned_asset
-        if assigned_asset:
-            assigned_asset.status = "returned"         # <--- IMPORTANT
-            assigned_asset.asset_condition = condition  # Sync condition
-            assigned_asset.save()
-
-        # Mark borrow request as fully returned
-        borrow_request.is_fully_returned = True
-        borrow_request.save()
+            # Mark borrow request as fully returned
+            borrow_request.is_fully_returned = True
+            borrow_request.save()
 
         messages.success(request, "Asset marked as returned successfully.")
         return redirect("requests:admin_manage_returns")
 
     return redirect("requests:admin_manage_returns")
+
 
 
 @login_required
@@ -603,24 +596,27 @@ def staff_return_detail(request, return_id):
 
 @login_required
 def staff_mark_returned(request, req_id):
-
     borrow_request = get_object_or_404(AssetRequest, id=req_id)
 
     if request.method == "POST":
-
         returned_date = request.POST.get("returned_date")
-        condition = request.POST.get("condition_on_return")
-        remarks = request.POST.get("remarks")
+        condition = request.POST.get("condition_on_return", "good")
+        remarks = request.POST.get("remarks", "")
 
         # Convert datetime-local to timezone-aware datetime
-        returned_dt = timezone.make_aware(
-            timezone.datetime.fromisoformat(returned_date)
-        )
+        returned_dt = timezone.now()
+        if returned_date:
+            try:
+                returned_dt = timezone.make_aware(
+                    timezone.datetime.fromisoformat(returned_date)
+                )
+            except ValueError:
+                messages.error(request, "Invalid date format. Using current time.")
 
-        # Prevent multiple return records for same request
+        # Ensure single return record per borrow request
         AssetReturn.objects.filter(borrow_request=borrow_request).delete()
 
-        # Create/Save return record
+        # Create the return record
         AssetReturn.objects.create(
             borrow_request=borrow_request,
             returned_date=returned_dt,
@@ -629,13 +625,11 @@ def staff_mark_returned(request, req_id):
             received_by=request.user
         )
 
-        # ============================
-        # UPDATE ASSET STATUS HERE
-        # ============================
+        # Update assigned asset status
         assigned_asset = borrow_request.assigned_asset
         if assigned_asset:
-            assigned_asset.status = "returned"         # <--- IMPORTANT
-            assigned_asset.asset_condition = condition  # Sync condition
+            assigned_asset.status = "returned"
+            assigned_asset.asset_condition = condition
             assigned_asset.save()
 
         # Mark borrow request as fully returned
@@ -645,7 +639,8 @@ def staff_mark_returned(request, req_id):
         messages.success(request, "Asset marked as returned successfully.")
         return redirect("requests:staff_manage_returns")
 
-    return redirect("requests:staff_manage_returns")
+    return redirect("requests:staff_manage_returns")                            
+
 
 
 @login_required
@@ -726,11 +721,6 @@ def available_assets(request):
 
     return render(request, "requests/available_assets.html", context)
 
-
-# --------------------------
-# USER: Request an Asset
-# --------------------------
-
 @login_required
 def make_request(request):
     if request.method == 'POST':
@@ -738,14 +728,14 @@ def make_request(request):
         if form.is_valid():
             asset_request = form.save(commit=False)
             asset_request.user = request.user
-            asset_request.request_date = form.cleaned_data["request_date"]
-            asset_request.return_date = form.cleaned_data["return_date"]
-            asset_request.save()
-            messages.success(request, "Your asset request has been submitted successfully!")
-            return redirect('accounts:normal_dashboard')
+            asset_request.save()  # request_date set automatically here
+
+            messages.success(
+                request,
+                "Your asset request has been submitted successfully!"
+            )
         else:
             messages.error(request, "Please correct the errors below.")
-            return redirect('accounts:normal_dashboard')
 
     return redirect('accounts:normal_dashboard')
 
@@ -756,11 +746,11 @@ def my_requests(request):
         user=request.user
     ).select_related("user", "assigned_asset", "approved_by")
 
-    return render(request, "accounts/normal_dashboard.html", {
-        "requests": user_requests
-    })
-
-
+    return render(
+        request,
+        "accounts/normal_dashboard.html",
+        {"requests": user_requests}
+    )
 
 # --------------------------
 # USER: Cancel a pending request

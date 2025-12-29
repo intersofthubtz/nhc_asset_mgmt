@@ -29,96 +29,89 @@
   </form>
 
   <!-- Table -->
-  <div class="overflow-x-auto bg-white shadow-md rounded-none">
-    <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
-      <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
-        <tr>
-          <th class="py-3 px-4 text-left">User</th>
-          <th class="py-3 px-4 text-left">Asset Category</th>
-          <th class="py-3 px-4 text-left">Assigned Asset</th>
-          <th class="py-3 px-4 text-left">Returned Date</th>
-          <th class="py-3 px-4 text-left">Condition</th>
-          <th class="py-3 px-4 text-left">Received By</th>
-          <th class="py-3 px-4 text-center">Actions</th>
-        </tr>
-      </thead>
+<div class="overflow-x-auto bg-white shadow-md rounded-none">
+  <table class="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+    <thead class="bg-gray-200 text-nhc-black uppercase font-semibold">
+      <tr>
+        <th class="py-3 px-4 text-left">User</th>
+        <th class="py-3 px-4 text-left">Asset Category</th>
+        <th class="py-3 px-4 text-left">Assigned Asset</th>
+        <th class="py-3 px-4 text-left">Returned Date</th>
+        <th class="py-3 px-4 text-left">Condition</th>
+        <th class="py-3 px-4 text-left">Received By</th>
+        <th class="py-3 px-4 text-center">Actions</th>
+      </tr>
+    </thead>
 
-      <tbody class="divide-y divide-gray-100">
-        {% for ret in page_obj %}
-        <tr class="hover:bg-gray-50 transition duration-150">
+    <tbody class="divide-y divide-gray-100">
+      {% for ret in page_obj %}
+      <tr class="hover:bg-gray-50 transition duration-150">
+        <td class="py-3 px-4 font-semibold text-nhc-blue">
+          {{ ret.borrow_request.user.username }}
+        </td>
 
-          <td class="py-3 px-4 font-semibold text-nhc-blue">
-            {{ ret.borrow_request.user.username }}
-          </td>
+        <td class="py-3 px-4">
+          {{ ret.borrow_request.asset_category }}
+        </td>
 
-          <td class="py-3 px-4">
-            {{ ret.borrow_request.asset_category }}
-          </td>
+        <td class="py-3 px-4">
+          {% if ret.borrow_request.assigned_asset %}
+            <div class="font-semibold text-nhc-blue">
+              {{ ret.borrow_request.assigned_asset.model }}
+            </div>
+            <div class="text-gray-500 text-xs">
+              Serial: {{ ret.borrow_request.assigned_asset.serial_number }}
+            </div>
+          {% else %}
+            <span class="text-gray-400">—</span>
+          {% endif %}
+        </td>
 
-          <td class="py-3 px-4">
-            {% if ret.borrow_request.assigned_asset %}
-              <div class="font-semibold text-nhc-blue">
-                {{ ret.borrow_request.assigned_asset.model }}
-              </div>
-              <div class="text-gray-500 text-xs">
-                Serial: {{ ret.borrow_request.assigned_asset.serial_number }}
-              </div>
-            {% else %}
-              <span class="text-gray-400">—</span>
-            {% endif %}
-          </td>
+        <td class="py-3 px-4">
+          {{ ret.returned_date|date:"M d, Y H:i" }}
+        </td>
 
-          <td class="py-3 px-4">
-            {{ ret.returned_date|date:"M d, Y H:i" }}
-          </td>
+        <td class="py-3 px-4">
+          <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
+            {% if ret.condition_on_return == 'good' %}bg-green-100 text-green-700
+            {% elif ret.condition_on_return == 'fair' %}bg-yellow-100 text-yellow-700
+            {% elif ret.condition_on_return == 'lost' %}bg-gray-300 text-gray-700{% endif %}">
+            {{ ret.get_condition_on_return_display }}
+          </span>
+        </td>
 
-          <td class="py-3 px-4">
-            <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
-              {% if ret.condition_on_return == 'good' %}bg-green-100 text-green-700
-              {% elif ret.condition_on_return == 'fair' %}bg-yellow-100 text-yellow-700
-              {% elif ret.condition_on_return == 'poor' %}bg-red-100 text-red-700
-              {% elif ret.condition_on_return == 'lost' %}bg-gray-300 text-gray-700{% endif %}">
-              {{ ret.get_condition_on_return_display }}
+        <td class="py-3 px-4">
+          {{ ret.received_by.username|default:"—" }}
+        </td>
+
+        <td class="py-3 px-4 flex justify-center gap-4">
+          <a href="{% url 'requests:admin_return_detail' ret.pk %}"
+             class="text-blue-600 hover:text-blue-900" title="View Details">
+            <i class="fas fa-eye"></i>
+          </a>
+
+          {% if not ret.returned_date %}
+            <button onclick="openReturnModal('{{ ret.borrow_request.pk }}')"
+                    class="text-green-600 hover:text-green-900" title="Mark as Returned">
+              <i class="fas fa-check-circle"></i>
+            </button>
+          {% else %}
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+              ✔ Returned
             </span>
-          </td>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="py-8 text-center text-gray-500">No returned assets found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-          <td class="py-3 px-4">
-            {{ ret.received_by.username|default:"—" }}
-          </td>
 
-          <!-- ACTIONS -->
-          <td class="py-3 px-4 flex justify-center gap-4">
-
-            <!-- View Return Details -->
-            <a href="{% url 'requests:admin_return_detail' ret.pk %}"
-               class="text-blue-600 hover:text-blue-900" title="View Details">
-              <i class="fas fa-eye"></i>
-            </a>
-
-            {% if not ret.returned_date %}
-              <!-- Mark as Returned ONLY if not returned -->
-              <button onclick="openReturnModal('{{ ret.borrow_request.pk }}')"
-                 class="text-green-600 hover:text-green-900" title="Mark as Returned">
-                <i class="fas fa-check-circle"></i>
-              </button>
-            {% else %}
-              <!-- Already returned badge -->
-              <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                ✔ Returned
-              </span>
-            {% endif %}
-          </td>
-
-        </tr>
-
-        {% empty %}
-        <tr>
-          <td colspan="7" class="py-8 text-center text-gray-500">No returned assets found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
 
   <!-- Pagination -->
   {% if page_obj.has_other_pages %}
@@ -158,7 +151,6 @@
 <div id="returnModal"
      class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm hidden flex justify-center items-center z-50">
 
-
   <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
 
     <h2 class="text-xl font-bold mb-4 text-nhc-blue">Mark Asset as Returned</h2>
@@ -166,16 +158,12 @@
     <form id="returnForm" method="POST">
       {% csrf_token %}
 
-      <label class="block mb-2 font-semibold">Return Date</label>
-      <input type="date" name="returned_date"
-             class="w-full border px-3 py-2 rounded mb-4" required>
-
       <label class="block mb-2 font-semibold">Condition</label>
       <select name="condition_on_return"
               class="w-full border px-3 py-2 rounded mb-4" required>
         <option value="good">Good</option>
         <option value="fair">Fair</option>
-        <option value="poor">Poor</option>
+        <option value="damaged">Damaged</option>
         <option value="lost">Lost</option>
       </select>
 
@@ -196,6 +184,7 @@
   </div>
 
 </div>
+
 
 <script>
 function openReturnModal(reqId) {
