@@ -14,7 +14,7 @@ urlpatterns = [
     
     # Staff routes
     path('manage-requests/', views.staff_manage_requests, name='staff_manage_requests'),
-    path('manage-request/<int:pk>/<str:action>/', views.update_request_status, name='update_request_status'),
+    path('manage-request/<int:pk>/<str:action>/', views.staff_update_request_status, name='staff_update_request_status'),
     path('assign-asset/<int:pk>/', views.staff_assign_asset, name='staff_assign_asset'),
     path('get-request-details/<int:pk>/', views.staff_request_details, name='staff_get_request_details'),
     

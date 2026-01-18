@@ -2,5 +2,6 @@
     "cSpell.words": [
         "linecap"
     ],
-    "workbench.editor.enablePreview": true
+    "workbench.editor.enablePreview": true,
+    "CodeGPT.apiKey": "Anthropic"
 }

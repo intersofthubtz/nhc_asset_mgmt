@@ -3,10 +3,10 @@
 
 <h2 class="text-2xl font-bold text-nhc-blue mb-3">Reports</h2>
 <p class="text-gray-700 mb-6">
-  Generate asset usage or request summary reports in Excel format.
+  Generate asset usage, request summary, or stock reports in Excel format.
 </p>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
   <!-- Asset Usage Report -->
   <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
@@ -18,11 +18,21 @@
     </button>
   </div>
 
-  <!-- Request Summary -->
+  <!-- Request Summary Report -->
   <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
     <h5 class="text-lg font-semibold text-nhc-blue mb-2">Request Summary</h5>
     <p class="text-gray-600 mb-3">See pending, approved, and rejected requests.</p>
     <button onclick="openReportModal('request_summary')" 
+            class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
+      Export Report
+    </button>
+  </div>
+
+  <!-- Stock Report -->
+  <div class="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition border-t-4 border-nhc-blue">
+    <h5 class="text-lg font-semibold text-nhc-blue mb-2">Stock Report</h5>
+    <p class="text-gray-600 mb-3">See all assets currently in store or filter by status.</p>
+    <button onclick="openReportModal('stock')" 
             class="inline-block bg-nhc-yellow text-nhc-black font-semibold py-2 px-4 rounded-md hover:bg-yellow-500 transition">
       Export Report
     </button>
@@ -34,13 +44,13 @@
 <div id="reportModal" class="fixed inset-x-0 top-10 hidden z-50">
   <div class="bg-white rounded-xl w-full max-w-md p-6 mx-auto transform transition-all scale-100">
     <h2 class="text-xl font-bold mb-4 text-start text-nhc-blue">
-      Select Filters (Optional)
+      Select Filters
     </h2>
 
     <form id="reportForm" method="GET" target="_blank" action="">
       <input type="hidden" name="report_type" id="modalReportType">
 
-      <!-- Username Filter (Only visible on Request Summary) -->
+      <!-- Username Filter (Only for Request Summary) -->
       <div id="usernameFilterSection" class="mb-3 hidden">
         <label class="block text-sm font-medium mb-1">
           User Name <span class="text-gray-400 text-xs">(optional)</span>
@@ -50,7 +60,22 @@
                placeholder="Enter username">
       </div>
 
-      <!-- Date Range -->
+      <!-- Status Filter (Only for Stock) -->
+      <div id="statusFilterSection" class="mb-3 hidden">
+        <label class="block text-sm font-medium mb-1">
+          Status <span class="text-gray-400 text-xs">(optional)</span>
+        </label>
+        <select name="status" class="w-full border px-3 py-2 rounded">
+          <option value="">All</option>
+          <option value="available">Available</option>
+          <option value="borrowed">Borrowed</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="retired">Retired</option>
+          <option value="returned">Returned</option>
+        </select>
+      </div>
+
+      <!-- Date Range (Optional for all reports) -->
       <div class="mb-3">
         <label class="block text-sm font-medium mb-1">Start Date <span class="text-gray-400 text-xs">(optional)</span></label>
         <input type="date" name="start_date" class="w-full border px-3 py-2 rounded">
@@ -76,9 +101,10 @@
   function openReportModal(reportType) {
     const modal = document.getElementById("reportModal");
     const usernameField = document.getElementById("usernameFilterSection");
+    const statusField = document.getElementById("statusFilterSection");
     document.getElementById("modalReportType").value = reportType;
-    const form = document.getElementById("reportForm");
 
+    const form = document.getElementById("reportForm");
     form.action = `/assets/admin/export-report/${reportType}/`;
 
     // Show Username field only for request_summary
@@ -86,6 +112,13 @@
       usernameField.classList.remove("hidden");
     } else {
       usernameField.classList.add("hidden");
+    }
+
+    // Show Status field only for stock report
+    if (reportType === "stock") {
+      statusField.classList.remove("hidden");
+    } else {
+      statusField.classList.add("hidden");
     }
 
     modal.classList.remove("hidden");

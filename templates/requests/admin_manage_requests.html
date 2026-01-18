@@ -21,15 +21,14 @@
 
     <!-- Filters -->
     <div class="flex gap-3 w-full sm:w-auto flex-wrap">
-
       <select name="status"
               class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-nhc-blue focus:border-transparent transition shadow-sm w-full sm:w-44">
         <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-        <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
-        <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
-        <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
       </select>
-
     </div>
   </form>
 
@@ -57,7 +56,7 @@
           </td>
 
           <td class="py-3 px-4">
-            {{ req.asset_category }}
+            {{ req.get_asset_category_display }}
           </td>
 
           <td class="py-3 px-4">
@@ -65,13 +64,13 @@
           </td>
 
           <td class="py-3 px-4">
-            {{ req.return_date|default:"—" }}
+            {{ req.return_date|date:"M d, Y"|default:"—" }}
           </td>
 
           <td class="py-3 px-4">
-            {% if req.assigned_asset_id %}
+            {% if req.assigned_asset %}
               <span class="text-green-700 font-semibold">
-                Asset #{{ req.assigned_asset_id }}
+                Asset #{{ req.assigned_asset.id }} - {{ req.assigned_asset.model }}
               </span>
             {% else %}
               <span class="text-gray-500">Not Assigned</span>
@@ -80,10 +79,11 @@
 
           <td class="py-3 px-4">
             <span class="inline-flex items-center px-3 py-1 font-semibold rounded-full
-              {% if req.status == 'Pending' %}bg-yellow-100 text-yellow-700
-              {% elif req.status == 'Approved' %}bg-blue-100 text-blue-700
-              {% elif req.status == 'Rejected' %}bg-gray-100 text-gray-700{% endif %}">
-              {{ req.status }}
+              {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700
+              {% elif req.status == 'approved' %}bg-blue-100 text-blue-700
+              {% elif req.status == 'rejected' %}bg-gray-100 text-gray-700
+              {% elif req.status == 'cancelled' %}bg-red-100 text-red-700{% endif %}">
+              {{ req.get_status_display }}
             </span>
           </td>
 
@@ -95,21 +95,6 @@
                class="text-gray-600 hover:text-gray-800" title="View Details">
               <i class="fas fa-eye"></i>
             </a>
-
-            <!-- APPROVE -->
-            {% if req.status == 'Pending' %}
-            <a href="{% url 'requests:admin_update_request_status' req.pk 'approve' %}"
-               class="text-green-600 hover:text-green-800" title="Approve">
-              <i class="fas fa-check-circle"></i>
-            </a>
-
-            <!-- REJECT -->
-            <a href="{% url 'requests:admin_update_request_status' req.pk 'reject' %}"
-               class="text-red-600 hover:text-red-800" title="Reject">
-              <i class="fas fa-times-circle"></i>
-            </a>
-            {% endif %}
-
           </td>
 
         </tr>
@@ -152,14 +137,47 @@
       {% endif %}
     </nav>
   {% endif %}
+
 </div>
 
-<!-- JS: Auto-submit Search/Filters -->
+<!-- APPROVE MODAL -->
+<div id="approveModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">Approve Request</h2>
+    <form id="approveForm" method="POST">
+      {% csrf_token %}
+      <p class="mb-4">Are you sure you want to approve this request?</p>
+      <textarea name="remarks" placeholder="Optional remarks" class="w-full border rounded p-2 mb-4"></textarea>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Approve</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div id="rejectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">Reject Request</h2>
+    <form id="rejectForm" method="POST">
+      {% csrf_token %}
+      <p class="mb-4">Please provide a reason for rejection:</p>
+      <textarea name="remarks" placeholder="Rejection reason" class="w-full border rounded p-2 mb-4" required></textarea>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeRejectModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JS: Modals & Auto-submit Search/Filters -->
 <script>
+  // Search & Filter auto-submit
   const searchInput = document.querySelector('input[name="search"]');
   const statusSelect = document.querySelector('select[name="status"]');
   const searchForm = document.getElementById('searchForm');
-
   let typingTimer;
   const delay = 600;
 
@@ -167,10 +185,30 @@
     clearTimeout(typingTimer);
     typingTimer = setTimeout(() => searchForm.submit(), delay);
   });
-
   searchInput.addEventListener('keydown', () => clearTimeout(typingTimer));
-
   statusSelect.addEventListener('change', () => searchForm.submit());
+
+  // Approve / Reject Modals
+  const approveForm = document.getElementById('approveForm');
+  const rejectForm = document.getElementById('rejectForm');
+
+  function openApproveModal(requestId) {
+    approveForm.action = `/requests/update-status/${requestId}/approve/`;
+    document.getElementById('approveModal').classList.remove('hidden');
+  }
+
+  function closeApproveModal() {
+    document.getElementById('approveModal').classList.add('hidden');
+  }
+
+  function openRejectModal(requestId) {
+    rejectForm.action = `/requests/update-status/${requestId}/reject/`;
+    document.getElementById('rejectModal').classList.remove('hidden');
+  }
+
+  function closeRejectModal() {
+    document.getElementById('rejectModal').classList.add('hidden');
+  }
 </script>
 
 {% endblock %}

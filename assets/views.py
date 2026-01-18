@@ -170,11 +170,13 @@ def edit_asset(request, pk):
     return render(request, 'assets/asset_form.html', {'form': form, 'title': 'Edit Asset'}) 
 
 
+
 @login_required
 def export_report_excel(request, report_type):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-    username = request.GET.get('username')  # Only used for request_summary
+    username = request.GET.get('username', '')  # only for request_summary
+    status_filter = request.GET.get('status', '')  # only for stock report
 
     # -----------------------------
     # Safe date parsing
@@ -203,19 +205,15 @@ def export_report_excel(request, report_type):
     # ============================================================
     if report_type == 'asset_usage':
         ws.title = "Asset Usage Report"
-
         headers = ["Asset Category", "Model", "Serial Number",
                    "Total Requests", "Approved Requests"]
         ws.append(headers)
-
         for col, _ in enumerate(headers, 1):
             ws.cell(row=1, column=col).font = header_font
             ws.cell(row=1, column=col).fill = header_fill
 
         for asset in Asset.objects.all():
-
-            requests_qs = asset.assigned_requests.all()   # ✔ FIXED REVERSE FK
-
+            requests_qs = asset.assigned_requests.all()
             if start_date:
                 requests_qs = requests_qs.filter(request_date__gte=start_date)
             if end_date:
@@ -233,19 +231,15 @@ def export_report_excel(request, report_type):
     # 🔹 REPORT TYPE: REQUEST SUMMARY
     # ============================================================
     elif report_type == 'request_summary':
-
         ws.title = "Request Summary"
-
         headers = ["User", "Asset", "Model", "Request Date",
                    "Return Date", "Status", "Remarks"]
         ws.append(headers)
-
         for col, _ in enumerate(headers, 1):
             ws.cell(row=1, column=col).font = header_font
             ws.cell(row=1, column=col).fill = header_fill
 
         requests = AssetRequest.objects.select_related('assigned_asset', 'user')
-
         if start_date:
             requests = requests.filter(request_date__gte=start_date)
         if end_date:
@@ -255,7 +249,6 @@ def export_report_excel(request, report_type):
 
         for req in requests:
             asset = req.assigned_asset
-
             ws.append([
                 req.user.username,
                 asset.asset_category if asset else "-",
@@ -264,6 +257,37 @@ def export_report_excel(request, report_type):
                 req.return_date.strftime("%Y-%m-%d") if req.return_date else "-",
                 req.status.capitalize(),
                 req.remarks or "-"
+            ])
+
+    # ============================================================
+    # 🔹 REPORT TYPE: STOCK
+    # ============================================================
+    elif report_type == 'stock':
+        ws.title = "Asset Stock Report"
+        headers = ["Asset Category", "Model", "Serial Number", "Status",
+                   "Condition", "Created At", "Created By"]
+        ws.append(headers)
+        for col, _ in enumerate(headers, 1):
+            ws.cell(row=1, column=col).font = header_font
+            ws.cell(row=1, column=col).fill = header_fill
+
+        assets = Asset.objects.all()
+        if start_date:
+            assets = assets.filter(created_at__date__gte=start_date)
+        if end_date:
+            assets = assets.filter(created_at__date__lte=end_date)
+        if status_filter:
+            assets = assets.filter(status=status_filter)
+
+        for asset in assets:
+            ws.append([
+                asset.asset_category,
+                asset.model or "-",
+                asset.serial_number or "-",
+                asset.status.capitalize(),
+                asset.asset_condition.capitalize(),
+                asset.created_at.strftime("%Y-%m-%d %H:%M"),
+                asset.created_by.username if asset.created_by else "-"
             ])
 
     else:
@@ -292,17 +316,7 @@ def export_report_excel(request, report_type):
     )
     response['Content-Disposition'] = f'attachment; filename={filename}'
     wb.save(response)
-
     return response
-
-
-
-
-
-
-
-
-
 
 
 

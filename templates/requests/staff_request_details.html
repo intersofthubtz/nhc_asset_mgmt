@@ -1,5 +1,6 @@
-{% extends "accounts/admin_dashboard.html" %}
-{% block admin_content %}
+{% extends "accounts/staff_dashboard.html" %}
+
+{% block staff_content %}
 
 <div class="w-full max-w-5xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
 
@@ -7,7 +8,7 @@
     <nav class="text-sm mb-6 text-gray-600">
         <ol class="flex items-center space-x-2">
             <li>
-                <a href="{% url 'requests:admin_manage_requests' %}"
+                <a href="{% url 'requests:staff_manage_requests' %}"
                    class="text-nhc-blue font-medium hover:underline">
                     Manage Requests
                 </a>
@@ -115,7 +116,7 @@
 
         <!-- APPROVE -->
         <form method="POST"
-              action="{% url 'requests:admin_update_request_status' req.pk 'approve' %}"
+              action="{% url 'requests:staff_update_request_status' req.pk 'approve' %}"
               class="mb-6">
             {% csrf_token %}
             <label class="block text-sm font-medium mb-1">Remarks (optional)</label>
@@ -127,7 +128,7 @@
 
         <!-- REJECT -->
         <form method="POST"
-              action="{% url 'requests:admin_update_request_status' req.pk 'reject' %}">
+              action="{% url 'requests:staff_update_request_status' req.pk 'reject' %}">
             {% csrf_token %}
             <label class="block text-sm font-medium mb-1">
                 Reject Reason <span class="text-red-500">*</span>
