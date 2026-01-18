@@ -9,27 +9,27 @@ class AssetForm(forms.ModelForm):
     )
     model = forms.CharField(
         max_length=100,
-        required=False,
+        required=True,  # made required
         widget=forms.TextInput(attrs={'placeholder': 'Enter model'})
     )
     serial_number = forms.CharField(
         max_length=150,
-        required=False,
+        required=True,  # made required
         widget=forms.TextInput(attrs={'placeholder': 'Enter unique serial number'})
     )
     barcode = forms.CharField(
         max_length=150,
-        required=False,
+        required=True,  # made required
         widget=forms.TextInput(attrs={'placeholder': 'Enter unique barcode'})
     )
     specification = forms.CharField(
         max_length=255,
-        required=False,
+        required=True,  # made required
         widget=forms.TextInput(attrs={'placeholder': 'Enter specifications'})
     )
     description = forms.CharField(
         max_length=255,
-        required=False,
+        required=True,  # made required
         widget=forms.TextInput(attrs={'placeholder': 'Enter description'})
     )
     status = forms.ChoiceField(

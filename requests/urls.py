@@ -4,10 +4,7 @@ from . import views
 app_name = 'requests'
 
 urlpatterns = [
-    # Normal user routes
-    # path('assets/', views.available_assets, name='available_assets'),
-    # path('assets/<int:pk>/request/', views.request_asset, name='request_asset'),
-    
+
     path('make-request/', views.make_request, name='make_request'),
     path('my-requests/', views.my_requests, name='my_requests'),
     path('my-requests/<int:pk>/cancel/', views.cancel_request, name='cancel_request'),
